@@ -3,140 +3,241 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>대순봄 — 홈</title>
-  <meta name="description" content="대순봄 — 공지와 게시판이 있는 간단한 홈페이지" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%230099ff'/%3E%3Ctext x='50' y='60' text-anchor='middle' font-size='52' font-family='Arial' fill='white'%3E봄%3C/text%3E%3C/svg%3E">
+  <title>대순봄 — 로그인 & 게시판 (Firebase)</title>
+  <meta name="description" content="Firebase Auth + Firestore로 동작하는 공지/게시판 예제" />
   <style>
     :root{
-      --bg: #0b1020;
-      --card: #121a32;
-      --muted: #94a3b8;
-      --text: #e5e7eb;
-      --accent: #4f46e5;
-      --accent-2: #22d3ee;
-      --ring: rgba(34,211,238,.35);
-      --shadow: 0 20px 45px rgba(0,0,0,.35);
-      --radius: 20px;
+      --bg: #0b1020; --card: #121a32; --muted: #94a3b8; --text: #e5e7eb;
+      --accent: #4f46e5; --accent-2: #22d3ee; --ring: rgba(34,211,238,.35);
+      --shadow: 0 20px 45px rgba(0,0,0,.35); --radius: 20px;
     }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
-                   Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Pretendard, Arial, sans-serif;
-      color: var(--text);
-      background: radial-gradient(1200px 600px at 10% 0%, rgba(79,70,229,.25), transparent 60%),
-                  radial-gradient(1000px 600px at 90% 0%, rgba(34,211,238,.2), transparent 60%),
-                  var(--bg);
-      line-height: 1.6;
-    }
-    a { color: var(--accent-2); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    header {
-      position: sticky; top: 0; z-index: 10;
-      backdrop-filter: saturate(1.3) blur(8px);
-      background: linear-gradient(to bottom, rgba(11,16,32,.9), rgba(11,16,32,.5));
-      border-bottom: 1px solid rgba(99,102,241,.2);
-    }
-    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .logo {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: radial-gradient(circle at 30% 20%, #22d3ee, #4f46e5);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.15), 0 4px 16px rgba(34,211,238,.35);
-    }
-    .title { font-weight: 800; letter-spacing: -.02em; font-size: 22px; }
-    .grid {
-      display: grid; gap: 24px; margin-top: 24px;
-      grid-template-columns: 1.1fr .9fr;
-    }
-    @media (max-width: 960px) {
-      .grid { grid-template-columns: 1fr; }
-    }
-    .card {
-      background: linear-gradient(180deg, rgba(18,26,50,.9), rgba(18,26,50,.8));
-      border: 1px solid rgba(148,163,184,.12);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-    }
-    .card .inner { padding: 24px; }
-    .card h2 {
-      margin: 0 0 12px; font-size: 22px; letter-spacing: -.01em;
-    }
-    .muted { color: var(--muted); }
-    .greeting {
-      display: grid; gap: 10px;
-      background:
-        radial-gradient(400px 120px at 0% 0%, rgba(34,211,238,.08), transparent 60%),
-        radial-gradient(500px 180px at 100% 0%, rgba(79,70,229,.07), transparent 60%);
-      border: 1px solid rgba(255,255,255,.06);
-    }
-    .greeting h1 {
-      font-size: 28px; margin: 0 0 8px; letter-spacing: -.02em;
-    }
-    .tip {
-      margin-top: 8px; font-size: 14px; color: var(--muted);
-    }
-    .list { display: grid; gap: 12px; padding: 0; margin: 0; list-style: none; }
-    .item {
-      border: 1px solid rgba(148,163,184,.12);
-      border-radius: 14px; padding: 14px 16px;
-      background: linear-gradient(180deg, rgba(18,26,50,.65), rgba(18,26,50,.5));
-    }
-    .item h3 { margin: 0 0 6px; font-size: 18px; }
-    .meta { display: flex; gap: 10px; font-size: 12px; color: var(--muted); }
-    .form {
-      display: grid; gap: 10px; margin-top: 14px;
-    }
-    input[type="text"], textarea {
-      width: 100%; padding: 12px 14px; border-radius: 12px;
-      border: 1px solid rgba(148,163,184,.25);
-      background: rgba(255,255,255,.03); color: var(--text);
-      outline: none; transition: box-shadow .15s ease, border-color .15s ease;
-    }
-    input[type="text"]:focus, textarea:focus {
-      border-color: var(--accent-2);
-      box-shadow: 0 0 0 4px var(--ring);
-    }
-    textarea { min-height: 110px; resize: vertical; }
-    .row { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
-    @media (max-width: 640px){ .row{ grid-template-columns: 1fr; } }
+    * { box-sizing: border-box; } html, body { height: 100%; }
+    body{ margin:0; font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Pretendard, Arial, sans-serif;
+          color:var(--text);
+          background: radial-gradient(1200px 600px at 10% 0%, rgba(79,70,229,.25), transparent 60%),
+                      radial-gradient(1000px 600px at 90% 0%, rgba(34,211,238,.2), transparent 60%),
+                      var(--bg); line-height:1.6; }
+    a{ color: var(--accent-2); text-decoration:none; } a:hover{text-decoration:underline;}
+    header{ position:sticky; top:0; z-index:10; backdrop-filter:saturate(1.3) blur(8px);
+            background: linear-gradient(to bottom, rgba(11,16,32,.9), rgba(11,16,32,.5));
+            border-bottom:1px solid rgba(99,102,241,.2); }
+    .container{ max-width:1100px; margin:0 auto; padding:24px; }
+    .brand{ display:flex; align-items:center; gap:14px; }
+    .logo{ width:36px; height:36px; border-radius:50%;
+           background: radial-gradient(circle at 30% 20%, #22d3ee, #4f46e5);
+           box-shadow: inset 0 0 0 1px rgba(255,255,255,.15), 0 4px 16px rgba(34,211,238,.35); }
+    .title{ font-weight:800; letter-spacing:-.02em; font-size:22px; }
+    .auth { margin-left:auto; display:flex; gap:10px; align-items:center; }
+    .user { font-size:14px; color: var(--muted); }
     .btn {
-      padding: 12px 16px; border: 0; border-radius: 12px;
+      padding: 10px 14px; border:0; border-radius:12px; cursor:pointer;
       background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      color: white; font-weight: 700; letter-spacing: .02em;
-      cursor: pointer; transition: transform .06s ease, filter .2s ease;
+      color:white; font-weight:700; letter-spacing:.02em;
+      transition: transform .06s ease, filter .2s ease;
     }
-    .btn:hover { filter: brightness(1.07); }
-    .btn:active { transform: translateY(1px); }
-    .empty { color: var(--muted); padding: 12px; border: 1px dashed rgba(148,163,184,.3); border-radius: 12px; text-align: center; }
-    .search { display: flex; gap: 10px; align-items: center; }
+    .btn:hover{ filter:brightness(1.07); } .btn:active{ transform: translateY(1px); }
+    .grid{ display:grid; gap:24px; margin-top:24px; grid-template-columns: 1.1fr .9fr; }
+    @media (max-width: 960px){ .grid{ grid-template-columns:1fr; } }
+    .card{ background: linear-gradient(180deg, rgba(18,26,50,.9), rgba(18,26,50,.8));
+           border:1px solid rgba(148,163,184,.12); border-radius:var(--radius); box-shadow:var(--shadow); }
+    .card .inner{ padding:24px; }
+    .card h2{ margin:0 0 12px; font-size:22px; letter-spacing:-.01em; }
+    .muted{ color:var(--muted); }
+    .greeting{ display:grid; gap:10px; border:1px solid rgba(255,255,255,.06); }
+    .greeting h1{ font-size:28px; margin:0 0 8px; letter-spacing:-.02em; }
+    .list{ display:grid; gap:12px; padding:0; margin:0; list-style:none; }
+    .item{ border:1px solid rgba(148,163,184,.12); border-radius:14px; padding:14px 16px;
+           background: linear-gradient(180deg, rgba(18,26,50,.65), rgba(18,26,50,.5)); }
+    .item h3{ margin:0 0 6px; font-size:18px; }
+    .meta{ display:flex; gap:10px; font-size:12px; color:var(--muted); }
+    .form{ display:grid; gap:10px; margin-top:14px; }
+    input[type="text"], textarea{ width:100%; padding:12px 14px; border-radius:12px;
+      border:1px solid rgba(148,163,184,.25); background:rgba(255,255,255,.03); color:var(--text);
+      outline:none; transition: box-shadow .15s ease, border-color .15s ease; }
+    input[type="text"]:focus, textarea:focus{ border-color:var(--accent-2); box-shadow:0 0 0 4px var(--ring); }
+    textarea{ min-height:110px; resize:vertical; }
+    .row{ display:grid; gap:10px; grid-template-columns:1fr 1fr; }
+    @media (max-width:640px){ .row{ grid-template-columns:1fr; } }
+    .empty{ color:var(--muted); padding:12px; border:1px dashed rgba(148,163,184,.3); border-radius:12px; text-align:center; }
     .pill { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: rgba(34,211,238,.16); border: 1px solid rgba(34,211,238,.35); color: #c0f6ff; }
-    footer { margin: 40px 0 60px; text-align: center; color: var(--muted); font-size: 14px; }
-    .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, monospace; border:1px solid rgba(148,163,184,.25); border-bottom-width:2px; padding:2px 6px; border-radius:8px; background:rgba(255,255,255,.04);}
+    .search { display:flex; gap:10px; align-items:center; }
+    footer{ margin:40px 0 60px; text-align:center; color:var(--muted); font-size:14px; }
   </style>
+
+  <!-- IMPORTANT: Firebase Auth는 "인증된 도메인"에서만 작동합니다.
+       Firebase Console → Authentication → Settings → Authorized domains에
+       다음 도메인을 추가하세요: summer1963bom.github.io -->
+  <script type="module">
+    // ====== CONFIG (아래를 본인 Firebase 프로젝트 값으로 교체하세요) ======
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    // ==============================================
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { 
+      getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { 
+      getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    const $ = (sel) => document.querySelector(sel);
+    const fmtDate = (ts) => ts?.toDate ? ts.toDate().toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" }) : "";
+
+    const signInBtn = document.getElementById("signInBtn");
+    const signOutBtn = document.getElementById("signOutBtn");
+    const userSpan = document.getElementById("userSpan");
+    signInBtn.addEventListener("click", async () => {
+      try{ await signInWithPopup(auth, provider); } catch(e){ alert("로그인 실패: " + e.message); }
+    });
+    signOutBtn.addEventListener("click", async () => { await signOut(auth); });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userSpan.textContent = `${user.displayName || "사용자"}님 로그인됨`;
+        signInBtn.style.display = "none"; signOutBtn.style.display = "inline-flex";
+        ["postTitle","postAuthor","postBody","postBtn","noticeTitleInput","noticeAuthorInput","noticeBodyInput","addNoticeBtn"]
+          .forEach(id => { const el = document.getElementById(id); if (el) el.disabled = false; });
+      } else {
+        userSpan.textContent = "로그인하지 않음";
+        signInBtn.style.display = "inline-flex"; signOutBtn.style.display = "none";
+        ["postTitle","postAuthor","postBody","postBtn","noticeTitleInput","noticeAuthorInput","noticeBodyInput","addNoticeBtn"]
+          .forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
+      }
+    });
+
+    const noticesRef = collection(db, "notices");
+    const postsRef = collection(db, "posts");
+
+    const noticeUl = document.getElementById("noticeList");
+    const noticeEmpty = document.getElementById("noticeEmpty");
+    onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap) => {
+      noticeUl.innerHTML = "";
+      if (snap.empty){ noticeEmpty.hidden = false; return; }
+      noticeEmpty.hidden = true;
+      snap.forEach(doc => {
+        const n = doc.data();
+        const li = document.createElement("li");
+        li.className = "item";
+        li.innerHTML = `
+          <h3>${n.title}</h3>
+          <div class="meta">
+            <span>작성자: ${n.author || "관리자"}</span>
+            <span>·</span>
+            <span>${fmtDate(n.createdAt)}</span>
+          </div>
+          <div class="muted">${(n.body||"").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>")}</div>
+        `;
+        noticeUl.appendChild(li);
+      });
+    });
+
+    const postUl = document.getElementById("boardList");
+    const postEmpty = document.getElementById("boardEmpty");
+    const searchInput = document.getElementById("searchInput");
+    let lastPosts = [];
+    onSnapshot(query(postsRef, orderBy("createdAt","desc")), (snap) => {
+      lastPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderPosts(searchInput.value);
+    });
+
+    function renderPosts(filter=""){
+      postUl.innerHTML = "";
+      const q = (filter||"").trim().toLowerCase();
+      const list = q ? lastPosts.filter(p => [p.title, p.author, p.body].some(t => (t||"").toLowerCase().includes(q))) : lastPosts;
+      document.getElementById("countPill").textContent = list.length + "개";
+      if (!list.length){ postEmpty.hidden = false; return; }
+      postEmpty.hidden = true;
+      list.forEach(p => {
+        const li = document.createElement("li");
+        li.className = "item";
+        li.innerHTML = `
+          <h3>${p.title}</h3>
+          <div class="meta">
+            <span>작성자: ${p.author || "익명"}</span>
+            <span>·</span>
+            <span>${fmtDate(p.createdAt)}</span>
+          </div>
+          <div class="muted">${(p.body||"").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>")}</div>
+        `;
+        postUl.appendChild(li);
+      });
+    }
+    searchInput.addEventListener("input", (e)=> renderPosts(e.target.value));
+
+    document.getElementById("addNoticeBtn").addEventListener("click", async () => {
+      const user = auth.currentUser;
+      if (!user) return alert("로그인 후 작성할 수 있습니다.");
+      const title = document.getElementById("noticeTitleInput").value.trim();
+      const author = document.getElementById("noticeAuthorInput").value.trim();
+      const body = document.getElementById("noticeBodyInput").value.trim();
+      if (!title || !body) return alert("제목과 내용을 입력해주세요.");
+      try{
+        await addDoc(noticesRef, {
+          title, author, body,
+          uid: user.uid, displayName: user.displayName || null,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById("noticeTitleInput").value = "";
+        document.getElementById("noticeAuthorInput").value = "";
+        document.getElementById("noticeBodyInput").value = "";
+      }catch(e){ alert("등록 실패: " + e.message); }
+    });
+
+    document.getElementById("postBtn").addEventListener("click", async () => {
+      const user = auth.currentUser;
+      if (!user) return alert("로그인 후 작성할 수 있습니다.");
+      const title = document.getElementById("postTitle").value.trim();
+      const author = document.getElementById("postAuthor").value.trim();
+      const body = document.getElementById("postBody").value.trim();
+      if (!title || !body) return alert("제목과 내용을 입력해주세요.");
+      try{
+        await addDoc(postsRef, {
+          title, author, body,
+          uid: user.uid, displayName: user.displayName || null,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById("postTitle").value = "";
+        document.getElementById("postAuthor").value = "";
+        document.getElementById("postBody").value = "";
+      }catch(e){ alert("등록 실패: " + e.message); }
+    });
+  </script>
 </head>
 <body>
   <header>
     <div class="container brand">
       <div class="logo" aria-hidden="true"></div>
       <div class="title">대순봄</div>
-      <div style="margin-left:auto" class="muted">공지 · 게시판</div>
+      <div class="auth">
+        <span id="userSpan" class="user">로그인하지 않음</span>
+        <button id="signInBtn" class="btn">Google 로그인</button>
+        <button id="signOutBtn" class="btn" style="display:none;">로그아웃</button>
+      </div>
     </div>
   </header>
 
-  <main class="container">
-    <!-- 사이트지기 인사말 -->
+  <main class="container-main">
     <section class="card greeting">
       <div class="inner">
         <h1>안녕하세요 👋 사이트지기입니다.</h1>
-        <p class="muted">이곳은 대순봄의 소식을 전하는 작은 공간입니다. 위쪽은 공지, 아래는 자유 게시판이에요. 모바일에서도 편하게 보실 수 있도록 가볍게 만들었습니다.</p>
-        <p class="tip">※ 본 페이지는 정적(Static) 사이트입니다. 게시물은 브라우저 <b>localStorage</b>에 저장되므로, 같은 컴퓨터/브라우저에서만 계속 보입니다.</p>
+        <p class="muted">이 페이지는 Firebase Auth(로그인) + Firestore(DB)로 구동됩니다. 로그인한 사용자만 글을 작성할 수 있어요.</p>
       </div>
     </section>
 
     <div class="grid">
-      <!-- 공지 -->
       <section class="card" aria-labelledby="noticeTitle">
         <div class="inner">
           <h2 id="noticeTitle">공지</h2>
@@ -144,18 +245,17 @@
           <div id="noticeEmpty" class="empty" hidden>등록된 공지가 없습니다.</div>
 
           <details class="form" style="margin-top:12px;">
-            <summary class="muted">공지 추가하기</summary>
+            <summary class="muted">공지 추가하기 (로그인 필요)</summary>
             <div class="row">
-              <input id="noticeTitleInput" type="text" placeholder="제목" aria-label="공지 제목" />
-              <input id="noticeAuthorInput" type="text" placeholder="작성자" aria-label="공지 작성자" />
+              <input id="noticeTitleInput" type="text" placeholder="제목" aria-label="공지 제목" disabled />
+              <input id="noticeAuthorInput" type="text" placeholder="작성자" aria-label="공지 작성자" disabled />
             </div>
-            <textarea id="noticeBodyInput" placeholder="내용" aria-label="공지 내용"></textarea>
-            <button class="btn" id="addNoticeBtn">공지 등록</button>
+            <textarea id="noticeBodyInput" placeholder="내용" aria-label="공지 내용" disabled></textarea>
+            <button class="btn" id="addNoticeBtn" disabled>공지 등록</button>
           </details>
         </div>
       </section>
 
-      <!-- 게시판 -->
       <section class="card" aria-labelledby="boardTitle">
         <div class="inner">
           <h2 id="boardTitle">게시판</h2>
@@ -168,145 +268,49 @@
 
           <div class="form">
             <div class="row">
-              <input id="postTitle" type="text" placeholder="제목" aria-label="게시글 제목" />
-              <input id="postAuthor" type="text" placeholder="작성자" aria-label="게시글 작성자" />
+              <input id="postTitle" type="text" placeholder="제목" aria-label="게시글 제목" disabled />
+              <input id="postAuthor" type="text" placeholder="작성자" aria-label="게시글 작성자" disabled />
             </div>
-            <textarea id="postBody" placeholder="내용" aria-label="게시글 내용"></textarea>
-            <button class="btn" id="postBtn">게시하기</button>
+            <textarea id="postBody" placeholder="내용" aria-label="게시글 내용" disabled></textarea>
+            <button class="btn" id="postBtn" disabled>게시하기</button>
           </div>
         </div>
       </section>
     </div>
 
+    <section class="card" style="margin-top:24px;">
+      <div class="inner">
+        <h2>Firestore 보안 규칙(필수)</h2>
+        <p class="muted">Console → Build → Firestore Database → Rules 에서 아래 규칙을 적용하세요.</p>
+<pre style="white-space:pre-wrap;word-break:break-all;color:#cbd5e1;">
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /notices/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.title is string
+                    && request.resource.data.body is string;
+    }
+    match /posts/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.title is string
+                    && request.resource.data.body is string;
+    }
+  }
+}
+</pre>
+        <p class="muted">더 안전하게: reCAPTCHA, 글쓰기 쿨다운, 관리자만 공지 작성 등 정책을 추가할 수 있어요.</p>
+      </div>
+    </section>
+
     <footer>© <span id="year"></span> 대순봄. All rights reserved.</footer>
   </main>
-
   <script>
-    // --- Utilities ---
-    const $ = (sel) => document.querySelector(sel);
-    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-    const fmtDate = (d) => new Date(d).toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" });
-
-    const LS_KEYS = {
-      NOTICE: "dsb_notice_v1",
-      BOARD: "dsb_board_v1"
-    };
-
-    // --- Seed sample data on first load ---
-    function ensureSeed() {
-      if (!localStorage.getItem(LS_KEYS.NOTICE)) {
-        const seed = [
-          { id: (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).toString(), title: "사이트 오픈", author: "관리자", body: "대순봄 웹페이지가 공개되었습니다. 많은 관심 부탁드립니다!", createdAt: Date.now() },
-          { id: (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).toString(), title: "게시판 이용 안내", author: "관리자", body: "예의와 배려를 지켜주세요. 상업성 글은 삭제될 수 있습니다.", createdAt: Date.now() }
-        ];
-        localStorage.setItem(LS_KEYS.NOTICE, JSON.stringify(seed));
-      }
-      if (!localStorage.getItem(LS_KEYS.BOARD)) {
-        const seed = [
-          { id: (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).toString(), title: "첫 인사 드립니다", author: "방문자", body: "안녕하세요! 응원합니다 :)", createdAt: Date.now() }
-        ];
-        localStorage.setItem(LS_KEYS.BOARD, JSON.stringify(seed));
-      }
-    }
-
-    // --- Notice ---
-    function loadNotices() {
-      const data = JSON.parse(localStorage.getItem(LS_KEYS.NOTICE) || "[]").sort((a,b)=>b.createdAt-a.createdAt);
-      const list = $("#noticeList");
-      list.innerHTML = "";
-      if (!data.length) { $("#noticeEmpty").hidden = false; return; }
-      $("#noticeEmpty").hidden = true;
-      for (const n of data) {
-        const li = document.createElement("li");
-        li.className = "item";
-        li.innerHTML = \`
-          <h3>\${n.title}</h3>
-          <div class="meta">
-            <span>작성자: \${n.author || "관리자"}</span>
-            <span>·</span>
-            <span>\${fmtDate(n.createdAt)}</span>
-          </div>
-          <div class="muted">\${(n.body||"").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>")}</div>
-          <div style="margin-top:8px; display:flex; gap:8px;">
-            <button class="btn" style="padding:8px 12px; font-size:12px;" data-id="\${n.id}" data-type="notice" onclick="handleDelete(event)">삭제</button>
-          </div>
-        \`;
-        list.appendChild(li);
-      }
-    }
-
-    // --- Board ---
-    function loadBoard(filter="") {
-      const data = JSON.parse(localStorage.getItem(LS_KEYS.BOARD) || "[]").sort((a,b)=>b.createdAt-a.createdAt);
-      const list = $("#boardList");
-      list.innerHTML = "";
-      const q = filter.trim().toLowerCase();
-      const filtered = q ? data.filter(p => [p.title,p.author,p.body].some(t => (t||"").toLowerCase().includes(q))) : data;
-      $("#countPill").textContent = filtered.length + "개";
-      if (!filtered.length) { $("#boardEmpty").hidden = false; return; }
-      $("#boardEmpty").hidden = true;
-      for (const p of filtered) {
-        const li = document.createElement("li");
-        li.className = "item";
-        li.innerHTML = \`
-          <h3>\${p.title}</h3>
-          <div class="meta">
-            <span>작성자: \${p.author || "익명"}</span>
-            <span>·</span>
-            <span>\${fmtDate(p.createdAt)}</span>
-          </div>
-          <div class="muted">\${(p.body||"").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>")}</div>
-          <div style="margin-top:8px; display:flex; gap:8px;">
-            <button class="btn" style="padding:8px 12px; font-size:12px;" data-id="\${p.id}" data-type="board" onclick="handleDelete(event)">삭제</button>
-          </div>
-        \`;
-        list.appendChild(li);
-      }
-    }
-
-    function handleDelete(e){
-      const id = e.target.dataset.id;
-      const type = e.target.dataset.type;
-      const key = type === "notice" ? LS_KEYS.NOTICE : LS_KEYS.BOARD;
-      const data = JSON.parse(localStorage.getItem(key) || "[]").filter(x => x.id !== id);
-      localStorage.setItem(key, JSON.stringify(data));
-      if (type === "notice") loadNotices(); else loadBoard($("#searchInput").value);
-    }
-
-    // --- Event bindings ---
-    $("#postBtn")?.addEventListener("click", () => {
-      const title = $("#postTitle").value.trim();
-      const author = $("#postAuthor").value.trim();
-      const body = $("#postBody").value.trim();
-      if (!title || !body) { alert("제목과 내용을 입력해주세요."); return; }
-      const post = { id: (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).toString(), title, author, body, createdAt: Date.now() };
-      const data = JSON.parse(localStorage.getItem(LS_KEYS.BOARD) || "[]");
-      data.push(post);
-      localStorage.setItem(LS_KEYS.BOARD, JSON.stringify(data));
-      $("#postTitle").value = ""; $("#postAuthor").value = ""; $("#postBody").value = "";
-      loadBoard($("#searchInput").value);
-    });
-
-    $("#addNoticeBtn")?.addEventListener("click", () => {
-      const title = $("#noticeTitleInput").value.trim();
-      const author = $("#noticeAuthorInput").value.trim();
-      const body = $("#noticeBodyInput").value.trim();
-      if (!title || !body) { alert("제목과 내용을 입력해주세요."); return; }
-      const n = { id: (crypto.randomUUID ? crypto.randomUUID() : String(Math.random())).toString(), title, author, body, createdAt: Date.now() };
-      const data = JSON.parse(localStorage.getItem(LS_KEYS.NOTICE) || "[]");
-      data.push(n);
-      localStorage.setItem(LS_KEYS.NOTICE, JSON.stringify(data));
-      $("#noticeTitleInput").value = ""; $("#noticeAuthorInput").value = ""; $("#noticeBodyInput").value = "";
-      loadNotices();
-    });
-
-    $("#searchInput")?.addEventListener("input", (e)=> loadBoard(e.target.value));
-
-    // --- Init ---
-    ensureSeed();
-    loadNotices();
-    loadBoard();
-    $("#year").textContent = new Date().getFullYear();
+    document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 </body>
 </html>
