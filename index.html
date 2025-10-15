@@ -283,34 +283,6 @@
       </section>
     </div>
 
-    <section class="card" style="margin-top:24px;">
-      <div class="inner">
-        <h2>Firestore 보안 규칙(필수)</h2>
-        <p class="muted">Console → Build → Firestore Database → Rules 에서 아래 규칙을 적용하세요.</p>
-<pre style="white-space:pre-wrap;word-break:break-all;color:#cbd5e1;">
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /notices/{id} {
-      allow read: if true;
-      allow create: if request.auth != null
-                    && request.resource.data.uid == request.auth.uid
-                    && request.resource.data.title is string
-                    && request.resource.data.body is string;
-    }
-    match /posts/{id} {
-      allow read: if true;
-      allow create: if request.auth != null
-                    && request.resource.data.uid == request.auth.uid
-                    && request.resource.data.title is string
-                    && request.resource.data.body is string;
-    }
-  }
-}
-</pre>
-        <p class="muted">더 안전하게: reCAPTCHA, 글쓰기 쿨다운, 관리자만 공지 작성 등 정책을 추가할 수 있어요.</p>
-      </div>
-    </section>
 
     <footer>© <span id="year"></span> 대순봄. All rights reserved.</footer>
   </main>
