@@ -68,158 +68,237 @@
     display: none !important;
   }
 
+
+/* 게시판 목록: 항목 간격을 좁게, 본문은 클릭 시에만 보이게 */
+.board-item { padding: 10px 14px; border:1px solid rgba(148,163,184,.18); border-radius:12px; }
+.board-row { display:flex; gap:12px; align-items:center; }
+.board-no   { width: 48px; min-width:48px; text-align:center; font-weight:700; color:#cdd5e1; border:1px solid rgba(148,163,184,.25); border-radius:10px; padding:6px 0; }
+.board-title { cursor:pointer; font-weight:700; text-decoration:none; }
+.board-title:hover { text-decoration:underline; }
+.board-meta { margin-left:auto; font-size:12px; color:#94a3b8; }
+.board-body { display:none; margin-top:10px; color:#cbd5e1; }
+
+/* 페이지네이션 */
+.pagination { display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+.page-btn {
+  border:1px solid rgba(148,163,184,.25); background:rgba(255,255,255,.03);
+  padding:8px 12px; border-radius:10px; cursor:pointer;
+}
+.page-btn[aria-current="page"] { font-weight:800; border-color:#22d3ee; box-shadow:0 0 0 3px rgba(34,211,238,.25); }
+.page-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+
+
   </style>
 
   <!-- IMPORTANT: Firebase Auth는 "인증된 도메인"에서만 작동합니다.
        Firebase Console → Authentication → Settings → Authorized domains에
        다음 도메인을 추가하세요: summer1963bom.github.io -->
-  <script type="module">
-    // ====== CONFIG (아래를 본인 Firebase 프로젝트 값으로 교체하세요) ======
-    const firebaseConfig = {
-      apiKey: "AIzaSyBiJ0DkGbirfs242W5nsVEgNroIxjCEHj0",
-      authDomain: "daesoonbom-84743.firebaseapp.com",
-      projectId: "daesoonbom-84743",
-      storageBucket: "daesoonbom-84743.appspot.com",
-      messagingSenderId: "202579781081",
-      appId: "1:202579781081:web:69532923098bef8399e5c8"
-    };
-    // ==============================================
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { 
-      getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut 
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import { 
-      getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot 
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
 
-    const $ = (sel) => document.querySelector(sel);
-    const fmtDate = (ts) => ts?.toDate ? ts.toDate().toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" }) : "";
 
-    const signInBtn = document.getElementById("signInBtn");
-    const signOutBtn = document.getElementById("signOutBtn");
-    const userSpan = document.getElementById("userSpan");
-    signInBtn.addEventListener("click", async () => {
-      try{ await signInWithPopup(auth, provider); } catch(e){ alert("로그인 실패: " + e.message); }
-    });
-    signOutBtn.addEventListener("click", async () => { await signOut(auth); });
+<script type="module">
+  // 이미 페이지 상단에서 firebase/app, auth, firestore 모듈을 import하고
+  // 아래 인스턴스들이 만들어져 있다고 가정합니다.
+  // const app = initializeApp(firebaseConfig);
+  // const auth = getAuth(app);
+  // const db   = getFirestore(app);
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        userSpan.textContent = `${user.displayName || "사용자"}님 로그인됨`;
-        signInBtn.style.display = "none"; signOutBtn.style.display = "inline-flex";
-        ["postTitle","postAuthor","postBody","postBtn","noticeTitleInput","noticeAuthorInput","noticeBodyInput","addNoticeBtn"]
-          .forEach(id => { const el = document.getElementById(id); if (el) el.disabled = false; });
-      } else {
-        userSpan.textContent = "로그인하지 않음";
-        signInBtn.style.display = "inline-flex"; signOutBtn.style.display = "none";
-        ["postTitle","postAuthor","postBody","postBtn","noticeTitleInput","noticeAuthorInput","noticeBodyInput","addNoticeBtn"]
-          .forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
-      }
-    });
+  import {
+    collection, addDoc, serverTimestamp, query, orderBy, onSnapshot
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  import { onAuthStateChanged, getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-    const noticesRef = collection(db, "notices");
-    const postsRef = collection(db, "posts");
+  const auth2 = getAuth(); // 이미 생성된 auth 재사용
 
-    const noticeUl = document.getElementById("noticeList");
-    const noticeEmpty = document.getElementById("noticeEmpty");
-    onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap) => {
-      noticeUl.innerHTML = "";
-      if (snap.empty){ noticeEmpty.hidden = false; return; }
-      noticeEmpty.hidden = true;
-      snap.forEach(doc => {
-        const n = doc.data();
-        const li = document.createElement("li");
-        li.className = "item";
-        li.innerHTML = `
-          <h3>${n.title}</h3>
-          <div class="meta">
-            <span>작성자: ${n.author || "관리자"}</span>
-            <span>·</span>
-            <span>${fmtDate(n.createdAt)}</span>
-          </div>
-          <div class="muted">${(n.body||"").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>")}</div>
-        `;
-        noticeUl.appendChild(li);
+  // ====== 요소 ======
+  const postUl     = document.getElementById("boardList");
+  const postEmpty  = document.getElementById("boardEmpty");
+  const searchInput= document.getElementById("searchInput");
+  const countPill  = document.getElementById("countPill");
+  const pagination = document.getElementById("pagination");
+
+  const postBtn    = document.getElementById("postBtn");
+  const postTitle  = document.getElementById("postTitle");
+  const postAuthor = document.getElementById("postAuthor");
+  const postBody   = document.getElementById("postBody");
+
+  // ====== 상태 ======
+  const postsRef   = collection(db, "posts");
+  let allPosts     = [];   // 전체 문서 (실시간 반영)
+  let filtered     = [];   // 검색 결과
+  let currentPage  = 1;
+  const PAGE_SIZE  = 10;   // 페이지당 글 수
+
+  const fmt = (ts) => {
+    try {
+      if (ts?.toDate) return ts.toDate().toLocaleString("ko-KR", { dateStyle:"medium", timeStyle:"short" });
+    } catch(_) {}
+    return "";
+  };
+
+  // ====== 실시간 구독: createdAt 내림차순 ======
+  const qPosts = query(postsRef, orderBy("createdAt", "desc"));
+  onSnapshot(qPosts, (snap) => {
+    allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    applyFilterAndRender();
+  }, (err) => {
+    alert("게시글 불러오기 오류: " + err.message);
+  });
+
+  // ====== 검색 ======
+  searchInput.addEventListener("input", () => {
+    currentPage = 1;
+    applyFilterAndRender();
+  });
+
+  function applyFilterAndRender(){
+    const q = (searchInput.value || "").trim().toLowerCase();
+    filtered = q
+      ? allPosts.filter(p => [p.title, p.author, p.body].some(t => (t||"").toLowerCase().includes(q)))
+      : allPosts.slice();
+
+    renderCount();
+    renderPage(currentPage);
+    renderPagination();
+  }
+
+  function renderCount(){
+    countPill.textContent = (filtered.length || 0) + "개";
+    postEmpty.hidden = filtered.length > 0;
+  }
+
+  // ====== 페이지 렌더링 ======
+  function renderPage(page=1){
+    currentPage = page;
+    postUl.innerHTML = "";
+    if (!filtered.length){ postEmpty.hidden = false; return; }
+    postEmpty.hidden = true;
+
+    const total = filtered.length;
+    const start = (page - 1) * PAGE_SIZE;
+    const end   = Math.min(start + PAGE_SIZE, total);
+    const pageSlice = filtered.slice(start, end);
+
+    // 번호: 최신글이 큰 번호를 갖도록 (예: 전체 123개면 123부터 감소)
+    // number = total - start - index
+    pageSlice.forEach((p, idx) => {
+      const globalNo = total - (start + idx);
+
+      const li = document.createElement("li");
+      li.className = "board-item";
+
+      // 제목줄(번호/제목/메타)
+      const row = document.createElement("div");
+      row.className = "board-row";
+
+      const no  = document.createElement("div");
+      no.className = "board-no";
+      no.textContent = globalNo;
+
+      const title = document.createElement("a");
+      title.href = "javascript:void(0)";
+      title.className = "board-title";
+      title.setAttribute("data-id", p.id);
+      title.textContent = p.title || "(제목 없음)";
+
+      const meta = document.createElement("div");
+      meta.className = "board-meta";
+      meta.textContent = `${p.author || "익명"} · ${fmt(p.createdAt) || ""}`;
+
+      row.appendChild(no);
+      row.appendChild(title);
+      row.appendChild(meta);
+
+      // 본문(기본 숨김)
+      const body = document.createElement("div");
+      body.className = "board-body";
+      body.innerHTML = (p.body || "").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>");
+
+      // 제목 클릭 → 본문 토글 (다른 항목은 닫힘)
+      title.addEventListener("click", () => {
+        // 현재 페이지 내 다른 본문 닫기
+        postUl.querySelectorAll(".board-body").forEach(el => {
+          if (el !== body) el.style.display = "none";
+        });
+        // 현재 항목 토글
+        body.style.display = (body.style.display === "block") ? "none" : "block";
       });
-    });
 
-    const postUl = document.getElementById("boardList");
-    const postEmpty = document.getElementById("boardEmpty");
-    const searchInput = document.getElementById("searchInput");
-    let lastPosts = [];
-    onSnapshot(query(postsRef, orderBy("createdAt","desc")), (snap) => {
-      lastPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderPosts(searchInput.value);
+      li.appendChild(row);
+      li.appendChild(body);
+      postUl.appendChild(li);
     });
+  }
 
-    function renderPosts(filter=""){
-      postUl.innerHTML = "";
-      const q = (filter||"").trim().toLowerCase();
-      const list = q ? lastPosts.filter(p => [p.title, p.author, p.body].some(t => (t||"").toLowerCase().includes(q))) : lastPosts;
-      document.getElementById("countPill").textContent = list.length + "개";
-      if (!list.length){ postEmpty.hidden = false; return; }
-      postEmpty.hidden = true;
-      list.forEach(p => {
-        const li = document.createElement("li");
-        li.className = "item";
-        li.innerHTML = `
-          <h3>${p.title}</h3>
-          <div class="meta">
-            <span>작성자: ${p.author || "익명"}</span>
-            <span>·</span>
-            <span>${fmtDate(p.createdAt)}</span>
-          </div>
-          <div class="muted">${(p.body||"").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>")}</div>
-        `;
-        postUl.appendChild(li);
-      });
+  // ====== 페이지네이션 ======
+  function renderPagination(){
+    pagination.innerHTML = "";
+    const total = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+    // Prev
+    const prev = document.createElement("button");
+    prev.className = "page-btn";
+    prev.textContent = "« 이전";
+    prev.disabled = currentPage <= 1;
+    prev.addEventListener("click", () => { if (currentPage > 1) { renderPage(currentPage - 1); renderPagination(); }});
+    pagination.appendChild(prev);
+
+    // 숫자 버튼 (많을 경우 적절히 축약해도 됨: 여기서는 단순 구현)
+    for (let p = 1; p <= totalPages; p++){
+      const btn = document.createElement("button");
+      btn.className = "page-btn";
+      btn.textContent = String(p);
+      if (p === currentPage) btn.setAttribute("aria-current", "page");
+      btn.addEventListener("click", () => { renderPage(p); renderPagination(); });
+      pagination.appendChild(btn);
     }
-    searchInput.addEventListener("input", (e)=> renderPosts(e.target.value));
 
-    document.getElementById("addNoticeBtn").addEventListener("click", async () => {
-      const user = auth.currentUser;
-      if (!user) return alert("로그인 후 작성할 수 있습니다.");
-      const title = document.getElementById("noticeTitleInput").value.trim();
-      const author = document.getElementById("noticeAuthorInput").value.trim();
-      const body = document.getElementById("noticeBodyInput").value.trim();
-      if (!title || !body) return alert("제목과 내용을 입력해주세요.");
-      try{
-        await addDoc(noticesRef, {
-          title, author, body,
-          uid: user.uid, displayName: user.displayName || null,
-          createdAt: serverTimestamp()
-        });
-        document.getElementById("noticeTitleInput").value = "";
-        document.getElementById("noticeAuthorInput").value = "";
-        document.getElementById("noticeBodyInput").value = "";
-      }catch(e){ alert("등록 실패: " + e.message); }
-    });
+    // Next
+    const next = document.createElement("button");
+    next.className = "page-btn";
+    next.textContent = "다음 »";
+    next.disabled = currentPage >= totalPages;
+    next.addEventListener("click", () => { if (currentPage < totalPages) { renderPage(currentPage + 1); renderPagination(); }});
+    pagination.appendChild(next);
+  }
 
-    document.getElementById("postBtn").addEventListener("click", async () => {
-      const user = auth.currentUser;
-      if (!user) return alert("로그인 후 작성할 수 있습니다.");
-      const title = document.getElementById("postTitle").value.trim();
-      const author = document.getElementById("postAuthor").value.trim();
-      const body = document.getElementById("postBody").value.trim();
-      if (!title || !body) return alert("제목과 내용을 입력해주세요.");
-      try{
-        await addDoc(postsRef, {
-          title, author, body,
-          uid: user.uid, displayName: user.displayName || null,
-          createdAt: serverTimestamp()
-        });
-        document.getElementById("postTitle").value = "";
-        document.getElementById("postAuthor").value = "";
-        document.getElementById("postBody").value = "";
-      }catch(e){ alert("등록 실패: " + e.message); }
-    });
-  </script>
+  // ====== 글쓰기(작성 후 목록 갱신은 실시간 스냅샷으로 처리) ======
+  postBtn.addEventListener("click", async () => {
+    const user = auth2.currentUser;
+    if (!user) return alert("로그인 후 작성할 수 있습니다.");
+    const title = postTitle.value.trim();
+    const author= postAuthor.value.trim();
+    const body  = postBody.value.trim();
+    if (!title || !body) return alert("제목과 내용을 입력해주세요.");
+
+    try {
+      await addDoc(postsRef, {
+        title, author, body,
+        uid: user.uid,
+        displayName: user.displayName || null,
+        createdAt: serverTimestamp()
+      });
+      postTitle.value = ""; postAuthor.value = ""; postBody.value = "";
+      // 실시간 스냅샷이 변경을 감지해서 자동 반영됩니다.
+    } catch (e) {
+      alert("등록 실패: " + e.message);
+    }
+  });
+
+  // ====== 인증 상태에 따라 글쓰기 폼 활성/비활성 ======
+  onAuthStateChanged(auth2, (user) => {
+    const enable = !!user;
+    [postTitle, postAuthor, postBody, postBtn].forEach(el => el.disabled = !enable);
+  });
+</script>
+
+
+
+
+
 </head>
 <body>
   <header>
@@ -261,26 +340,37 @@
         </div>
       </section>
 
-      <section class="card" aria-labelledby="boardTitle">
-        <div class="inner">
-          <h2 id="boardTitle">게시판</h2>
-          <div class="search" style="margin-bottom:10px;">
-            <input id="searchInput" type="text" placeholder="검색: 제목/작성자/내용" aria-label="게시판 검색" />
-            <span class="pill" id="countPill">0개</span>
-          </div>
-          <ul id="boardList" class="list" aria-live="polite"></ul>
-          <div id="boardEmpty" class="empty" hidden>첫 글을 남겨주세요!</div>
 
-          <div class="form">
-            <div class="row">
-              <input id="postTitle" type="text" placeholder="제목" aria-label="게시글 제목" disabled />
-              <input id="postAuthor" type="text" placeholder="작성자" aria-label="게시글 작성자" disabled />
-            </div>
-            <textarea id="postBody" placeholder="내용" aria-label="게시글 내용" disabled></textarea>
-            <button class="btn" id="postBtn" disabled>게시하기</button>
-          </div>
-        </div>
-      </section>
+<section class="card" aria-labelledby="boardTitle">
+  <div class="inner">
+    <h2 id="boardTitle">게시판</h2>
+
+    <!-- 검색 & 카운트 -->
+    <div class="search" style="margin-bottom:10px;">
+      <input id="searchInput" type="text" placeholder="검색: 제목/작성자/내용" aria-label="게시판 검색" />
+      <span class="pill" id="countPill">0개</span>
+    </div>
+
+    <!-- 게시판 목록(제목만) -->
+    <ul id="boardList" class="list" aria-live="polite"></ul>
+    <div id="boardEmpty" class="empty" hidden>등록된 게시글이 없습니다.</div>
+
+    <!-- 페이지네이션 -->
+    <nav id="pagination" class="pagination" aria-label="게시판 페이지 탐색"></nav>
+
+    <!-- 글쓰기 -->
+    <div class="form" style="margin-top:18px;">
+      <div class="row">
+        <input id="postTitle" type="text" placeholder="제목" aria-label="게시글 제목" disabled />
+        <input id="postAuthor" type="text" placeholder="작성자" aria-label="게시글 작성자" disabled />
+      </div>
+      <textarea id="postBody" placeholder="내용" aria-label="게시글 내용" disabled></textarea>
+      <button class="btn" id="postBtn" disabled>게시하기</button>
+    </div>
+  </div>
+</section>
+
+
     </div>
 
 
