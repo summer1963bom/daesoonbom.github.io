@@ -3,302 +3,114 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>대순봄 — 로그인 & 게시판 (Firebase)</title>
-  <meta name="description" content="Firebase Auth + Firestore로 동작하는 공지/게시판 예제" />
+  <title>대순봄 — 로그인 & 게시판</title>
+  <meta name="description" content="Firebase Auth + Firestore로 동작하는 공지/게시판" />
   <style>
     :root{
       --bg: #0b1020; --card: #121a32; --muted: #94a3b8; --text: #e5e7eb;
       --accent: #4f46e5; --accent-2: #22d3ee; --ring: rgba(34,211,238,.35);
       --shadow: 0 20px 45px rgba(0,0,0,.35); --radius: 20px;
     }
-    * { box-sizing: border-box; } html, body { height: 100%; }
-    body{ margin:0; font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
-          Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Pretendard, Arial, sans-serif;
-          color:var(--text);
-          background: radial-gradient(1200px 600px at 10% 0%, rgba(79,70,229,.25), transparent 60%),
-                      radial-gradient(1000px 600px at 90% 0%, rgba(34,211,238,.2), transparent 60%),
-                      var(--bg); line-height:1.6; }
-    a{ color: var(--accent-2); text-decoration:none; } a:hover{text-decoration:underline;}
-    header{ position:sticky; top:0; z-index:10; backdrop-filter:saturate(1.3) blur(8px);
-            background: linear-gradient(to bottom, rgba(11,16,32,.9), rgba(11,16,32,.5));
-            border-bottom:1px solid rgba(99,102,241,.2); }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Pretendard, Arial, sans-serif;
+      color:var(--text);
+      background: radial-gradient(1200px 600px at 10% 0%, rgba(79,70,229,.25), transparent 60%),
+                  radial-gradient(1000px 600px at 90% 0%, rgba(34,211,238,.2), transparent 60%),
+                  var(--bg);
+      line-height:1.6;
+    }
+    a{ color: var(--accent-2); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter:saturate(1.3) blur(8px);
+      background: linear-gradient(to bottom, rgba(11,16,32,.9), rgba(11,16,32,.5));
+      border-bottom:1px solid rgba(99,102,241,.2);
+    }
     .container{ max-width:1100px; margin:0 auto; padding:24px; }
     .brand{ display:flex; align-items:center; gap:14px; }
-    .logo{ width:36px; height:36px; border-radius:50%;
-           background: radial-gradient(circle at 30% 20%, #22d3ee, #4f46e5);
-           box-shadow: inset 0 0 0 1px rgba(255,255,255,.15), 0 4px 16px rgba(34,211,238,.35); }
+    .logo{
+      width:36px; height:36px; border-radius:50%;
+      background: radial-gradient(circle at 30% 20%, #22d3ee, #4f46e5);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.15), 0 4px 16px rgba(34,211,238,.35);
+    }
     .title{ font-weight:800; letter-spacing:-.02em; font-size:22px; }
-    .auth { margin-left:auto; display:flex; gap:10px; align-items:center; }
-    .user { font-size:14px; color: var(--muted); }
-    .btn {
+    .auth{ margin-left:auto; display:flex; gap:10px; align-items:center; }
+    .user{ font-size:14px; color: var(--muted); }
+    .btn{
       padding: 10px 14px; border:0; border-radius:12px; cursor:pointer;
       background: linear-gradient(90deg, var(--accent), var(--accent-2));
       color:white; font-weight:700; letter-spacing:.02em;
       transition: transform .06s ease, filter .2s ease;
     }
-    .btn:hover{ filter:brightness(1.07); } .btn:active{ transform: translateY(1px); }
+    .btn:hover{ filter:brightness(1.07); }
+    .btn:active{ transform: translateY(1px); }
+
     .grid{ display:grid; gap:24px; margin-top:24px; grid-template-columns: 1.1fr .9fr; }
     @media (max-width: 960px){ .grid{ grid-template-columns:1fr; } }
-    .card{ background: linear-gradient(180deg, rgba(18,26,50,.9), rgba(18,26,50,.8));
-           border:1px solid rgba(148,163,184,.12); border-radius:var(--radius); box-shadow:var(--shadow); }
+    .card{
+      background: linear-gradient(180deg, rgba(18,26,50,.9), rgba(18,26,50,.8));
+      border:1px solid rgba(148,163,184,.12);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
     .card .inner{ padding:24px; }
     .card h2{ margin:0 0 12px; font-size:22px; letter-spacing:-.01em; }
     .muted{ color:var(--muted); }
     .greeting{ display:grid; gap:10px; border:1px solid rgba(255,255,255,.06); }
     .greeting h1{ font-size:28px; margin:0 0 8px; letter-spacing:-.02em; }
+
+    /* 공지/게시판 공통 리스트 */
     .list{ display:grid; gap:12px; padding:0; margin:0; list-style:none; }
-    .item{ border:1px solid rgba(148,163,184,.12); border-radius:14px; padding:14px 16px;
-           background: linear-gradient(180deg, rgba(18,26,50,.65), rgba(18,26,50,.5)); }
+    .item{
+      border:1px solid rgba(148,163,184,.12);
+      border-radius:14px; padding:14px 16px;
+      background: linear-gradient(180deg, rgba(18,26,50,.65), rgba(18,26,50,.5));
+    }
     .item h3{ margin:0 0 6px; font-size:18px; }
     .meta{ display:flex; gap:10px; font-size:12px; color:var(--muted); }
+    .empty{ color:var(--muted); padding:12px; border:1px dashed rgba(148,163,184,.3); border-radius:12px; text-align:center; }
     .form{ display:grid; gap:10px; margin-top:14px; }
-    input[type="text"], textarea{ width:100%; padding:12px 14px; border-radius:12px;
-      border:1px solid rgba(148,163,184,.25); background:rgba(255,255,255,.03); color:var(--text);
-      outline:none; transition: box-shadow .15s ease, border-color .15s ease; }
-    input[type="text"]:focus, textarea:focus{ border-color:var(--accent-2); box-shadow:0 0 0 4px var(--ring); }
-    textarea{ min-height:110px; resize:vertical; }
     .row{ display:grid; gap:10px; grid-template-columns:1fr 1fr; }
     @media (max-width:640px){ .row{ grid-template-columns:1fr; } }
-    .empty{ color:var(--muted); padding:12px; border:1px dashed rgba(148,163,184,.3); border-radius:12px; text-align:center; }
+    input[type="text"], textarea{
+      width:100%; padding:12px 14px; border-radius:12px;
+      border:1px solid rgba(148,163,184,.25); background:rgba(255,255,255,.03); color:var(--text);
+      outline:none; transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    input[type="text"]:focus, textarea:focus{ border-color:var(--accent-2); box-shadow:0 0 0 4px var(--ring); }
+    textarea{ min-height:110px; resize:vertical; }
+
+    /* --- 게시판 전용: 제목만 보이게, 클릭 시 본문 펼침 --- */
+    .board-item { padding: 10px 14px; border:1px solid rgba(148,163,184,.18); border-radius:12px; }
+    .board-row { display:flex; gap:12px; align-items:center; }
+    .board-no   { width: 48px; min-width:48px; text-align:center; font-weight:700; color:#cdd5e1; border:1px solid rgba(148,163,184,.25); border-radius:10px; padding:6px 0; }
+    .board-title { cursor:pointer; font-weight:700; text-decoration:none; }
+    .board-title:hover { text-decoration:underline; }
+    .board-meta { margin-left:auto; font-size:12px; color:#94a3b8; }
+    .board-body { display:none; margin-top:10px; color:#cbd5e1; }
+
+    /* 페이지네이션 */
+    .pagination { display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+    .page-btn {
+      border:1px solid rgba(148,163,184,.25); background:rgba(255,255,255,.03);
+      padding:8px 12px; border-radius:10px; cursor:pointer;
+    }
+    .page-btn[aria-current="page"] { font-weight:800; border-color:#22d3ee; box-shadow:0 0 0 3px rgba(34,211,238,.25); }
+    .page-btn:disabled { opacity:.5; cursor:not-allowed; }
+
     .pill { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: rgba(34,211,238,.16); border: 1px solid rgba(34,211,238,.35); color: #c0f6ff; }
     .search { display:flex; gap:10px; align-items:center; }
+
     footer{ margin:40px 0 60px; text-align:center; color:var(--muted); font-size:14px; }
-
-  h2:contains('Firestore 보안 규칙(필수)') {
-    display: none !important;
-  }
-
-
-/* 게시판 목록: 항목 간격을 좁게, 본문은 클릭 시에만 보이게 */
-.board-item { padding: 10px 14px; border:1px solid rgba(148,163,184,.18); border-radius:12px; }
-.board-row { display:flex; gap:12px; align-items:center; }
-.board-no   { width: 48px; min-width:48px; text-align:center; font-weight:700; color:#cdd5e1; border:1px solid rgba(148,163,184,.25); border-radius:10px; padding:6px 0; }
-.board-title { cursor:pointer; font-weight:700; text-decoration:none; }
-.board-title:hover { text-decoration:underline; }
-.board-meta { margin-left:auto; font-size:12px; color:#94a3b8; }
-.board-body { display:none; margin-top:10px; color:#cbd5e1; }
-
-/* 페이지네이션 */
-.pagination { display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
-.page-btn {
-  border:1px solid rgba(148,163,184,.25); background:rgba(255,255,255,.03);
-  padding:8px 12px; border-radius:10px; cursor:pointer;
-}
-.page-btn[aria-current="page"] { font-weight:800; border-color:#22d3ee; box-shadow:0 0 0 3px rgba(34,211,238,.25); }
-.page-btn:disabled { opacity:.5; cursor:not-allowed; }
-
-
-
   </style>
 
-  <!-- IMPORTANT: Firebase Auth는 "인증된 도메인"에서만 작동합니다.
-       Firebase Console → Authentication → Settings → Authorized domains에
-       다음 도메인을 추가하세요: summer1963bom.github.io -->
-
-
-
-
-<script type="module">
-  // 이미 페이지 상단에서 firebase/app, auth, firestore 모듈을 import하고
-  // 아래 인스턴스들이 만들어져 있다고 가정합니다.
-  // const app = initializeApp(firebaseConfig);
-  // const auth = getAuth(app);
-  // const db   = getFirestore(app);
-
-  import {
-    collection, addDoc, serverTimestamp, query, orderBy, onSnapshot
-  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-  import { onAuthStateChanged, getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-
-  const auth2 = getAuth(); // 이미 생성된 auth 재사용
-
-  // ====== 요소 ======
-  const postUl     = document.getElementById("boardList");
-  const postEmpty  = document.getElementById("boardEmpty");
-  const searchInput= document.getElementById("searchInput");
-  const countPill  = document.getElementById("countPill");
-  const pagination = document.getElementById("pagination");
-
-  const postBtn    = document.getElementById("postBtn");
-  const postTitle  = document.getElementById("postTitle");
-  const postAuthor = document.getElementById("postAuthor");
-  const postBody   = document.getElementById("postBody");
-
-  // ====== 상태 ======
-  const postsRef   = collection(db, "posts");
-  let allPosts     = [];   // 전체 문서 (실시간 반영)
-  let filtered     = [];   // 검색 결과
-  let currentPage  = 1;
-  const PAGE_SIZE  = 10;   // 페이지당 글 수
-
-  const fmt = (ts) => {
-    try {
-      if (ts?.toDate) return ts.toDate().toLocaleString("ko-KR", { dateStyle:"medium", timeStyle:"short" });
-    } catch(_) {}
-    return "";
-  };
-
-  // ====== 실시간 구독: createdAt 내림차순 ======
-  const qPosts = query(postsRef, orderBy("createdAt", "desc"));
-  onSnapshot(qPosts, (snap) => {
-    allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    applyFilterAndRender();
-  }, (err) => {
-    alert("게시글 불러오기 오류: " + err.message);
-  });
-
-  // ====== 검색 ======
-  searchInput.addEventListener("input", () => {
-    currentPage = 1;
-    applyFilterAndRender();
-  });
-
-  function applyFilterAndRender(){
-    const q = (searchInput.value || "").trim().toLowerCase();
-    filtered = q
-      ? allPosts.filter(p => [p.title, p.author, p.body].some(t => (t||"").toLowerCase().includes(q)))
-      : allPosts.slice();
-
-    renderCount();
-    renderPage(currentPage);
-    renderPagination();
-  }
-
-  function renderCount(){
-    countPill.textContent = (filtered.length || 0) + "개";
-    postEmpty.hidden = filtered.length > 0;
-  }
-
-  // ====== 페이지 렌더링 ======
-  function renderPage(page=1){
-    currentPage = page;
-    postUl.innerHTML = "";
-    if (!filtered.length){ postEmpty.hidden = false; return; }
-    postEmpty.hidden = true;
-
-    const total = filtered.length;
-    const start = (page - 1) * PAGE_SIZE;
-    const end   = Math.min(start + PAGE_SIZE, total);
-    const pageSlice = filtered.slice(start, end);
-
-    // 번호: 최신글이 큰 번호를 갖도록 (예: 전체 123개면 123부터 감소)
-    // number = total - start - index
-    pageSlice.forEach((p, idx) => {
-      const globalNo = total - (start + idx);
-
-      const li = document.createElement("li");
-      li.className = "board-item";
-
-      // 제목줄(번호/제목/메타)
-      const row = document.createElement("div");
-      row.className = "board-row";
-
-      const no  = document.createElement("div");
-      no.className = "board-no";
-      no.textContent = globalNo;
-
-      const title = document.createElement("a");
-      title.href = "javascript:void(0)";
-      title.className = "board-title";
-      title.setAttribute("data-id", p.id);
-      title.textContent = p.title || "(제목 없음)";
-
-      const meta = document.createElement("div");
-      meta.className = "board-meta";
-      meta.textContent = `${p.author || "익명"} · ${fmt(p.createdAt) || ""}`;
-
-      row.appendChild(no);
-      row.appendChild(title);
-      row.appendChild(meta);
-
-      // 본문(기본 숨김)
-      const body = document.createElement("div");
-      body.className = "board-body";
-      body.innerHTML = (p.body || "").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>");
-
-      // 제목 클릭 → 본문 토글 (다른 항목은 닫힘)
-      title.addEventListener("click", () => {
-        // 현재 페이지 내 다른 본문 닫기
-        postUl.querySelectorAll(".board-body").forEach(el => {
-          if (el !== body) el.style.display = "none";
-        });
-        // 현재 항목 토글
-        body.style.display = (body.style.display === "block") ? "none" : "block";
-      });
-
-      li.appendChild(row);
-      li.appendChild(body);
-      postUl.appendChild(li);
-    });
-  }
-
-  // ====== 페이지네이션 ======
-  function renderPagination(){
-    pagination.innerHTML = "";
-    const total = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
-    // Prev
-    const prev = document.createElement("button");
-    prev.className = "page-btn";
-    prev.textContent = "« 이전";
-    prev.disabled = currentPage <= 1;
-    prev.addEventListener("click", () => { if (currentPage > 1) { renderPage(currentPage - 1); renderPagination(); }});
-    pagination.appendChild(prev);
-
-    // 숫자 버튼 (많을 경우 적절히 축약해도 됨: 여기서는 단순 구현)
-    for (let p = 1; p <= totalPages; p++){
-      const btn = document.createElement("button");
-      btn.className = "page-btn";
-      btn.textContent = String(p);
-      if (p === currentPage) btn.setAttribute("aria-current", "page");
-      btn.addEventListener("click", () => { renderPage(p); renderPagination(); });
-      pagination.appendChild(btn);
-    }
-
-    // Next
-    const next = document.createElement("button");
-    next.className = "page-btn";
-    next.textContent = "다음 »";
-    next.disabled = currentPage >= totalPages;
-    next.addEventListener("click", () => { if (currentPage < totalPages) { renderPage(currentPage + 1); renderPagination(); }});
-    pagination.appendChild(next);
-  }
-
-  // ====== 글쓰기(작성 후 목록 갱신은 실시간 스냅샷으로 처리) ======
-  postBtn.addEventListener("click", async () => {
-    const user = auth2.currentUser;
-    if (!user) return alert("로그인 후 작성할 수 있습니다.");
-    const title = postTitle.value.trim();
-    const author= postAuthor.value.trim();
-    const body  = postBody.value.trim();
-    if (!title || !body) return alert("제목과 내용을 입력해주세요.");
-
-    try {
-      await addDoc(postsRef, {
-        title, author, body,
-        uid: user.uid,
-        displayName: user.displayName || null,
-        createdAt: serverTimestamp()
-      });
-      postTitle.value = ""; postAuthor.value = ""; postBody.value = "";
-      // 실시간 스냅샷이 변경을 감지해서 자동 반영됩니다.
-    } catch (e) {
-      alert("등록 실패: " + e.message);
-    }
-  });
-
-  // ====== 인증 상태에 따라 글쓰기 폼 활성/비활성 ======
-  onAuthStateChanged(auth2, (user) => {
-    const enable = !!user;
-    [postTitle, postAuthor, postBody, postBtn].forEach(el => el.disabled = !enable);
-  });
-</script>
-
-
-
-
-
+  <!-- 참고: Firebase Auth는 '허용된 도메인'에 이 도메인(summer1963bom.github.io)을 추가해야 동작합니다. -->
 </head>
 <body>
   <header>
@@ -313,21 +125,21 @@
     </div>
   </header>
 
-  <main class="container-main">
+  <main class="container">
     <section class="card greeting">
       <div class="inner">
         <h1>안녕하세요 👋 사이트지기입니다.</h1>
-        <p class="muted">이 페이지는 Firebase Auth(로그인) + Firestore(DB)로 구동됩니다. 로그인한 사용자만 글을 작성할 수 있어요.</p>
+        <p class="muted">로그인한 사용자는 게시판에 글을 쓸 수 있고, 누구나 글 목록을 볼 수 있어요.</p>
       </div>
     </section>
 
     <div class="grid">
+      <!-- 공지 -->
       <section class="card" aria-labelledby="noticeTitle">
         <div class="inner">
           <h2 id="noticeTitle">공지</h2>
           <ul id="noticeList" class="list" aria-live="polite"></ul>
           <div id="noticeEmpty" class="empty" hidden>등록된 공지가 없습니다.</div>
-
           <details class="form" style="margin-top:12px;">
             <summary class="muted">공지 추가하기 (로그인 필요)</summary>
             <div class="row">
@@ -340,44 +152,320 @@
         </div>
       </section>
 
+      <!-- 게시판 -->
+      <section class="card" aria-labelledby="boardTitle">
+        <div class="inner">
+          <h2 id="boardTitle">게시판</h2>
 
-<section class="card" aria-labelledby="boardTitle">
-  <div class="inner">
-    <h2 id="boardTitle">게시판</h2>
+          <div class="search" style="margin-bottom:10px;">
+            <input id="searchInput" type="text" placeholder="검색: 제목/작성자/내용" aria-label="게시판 검색" />
+            <span class="pill" id="countPill">0개</span>
+          </div>
 
-    <!-- 검색 & 카운트 -->
-    <div class="search" style="margin-bottom:10px;">
-      <input id="searchInput" type="text" placeholder="검색: 제목/작성자/내용" aria-label="게시판 검색" />
-      <span class="pill" id="countPill">0개</span>
+          <!-- 제목만 보이는 목록 -->
+          <ul id="boardList" class="list" aria-live="polite"></ul>
+          <div id="boardEmpty" class="empty" hidden>등록된 게시글이 없습니다.</div>
+
+          <!-- 페이지네이션 -->
+          <nav id="pagination" class="pagination" aria-label="게시판 페이지 탐색"></nav>
+
+          <!-- 글쓰기 -->
+          <div class="form" style="margin-top:18px;">
+            <div class="row">
+              <input id="postTitle" type="text" placeholder="제목" aria-label="게시글 제목" disabled />
+              <input id="postAuthor" type="text" placeholder="작성자" aria-label="게시글 작성자" disabled />
+            </div>
+            <textarea id="postBody" placeholder="내용" aria-label="게시글 내용" disabled></textarea>
+            <button class="btn" id="postBtn" disabled>게시하기</button>
+          </div>
+        </div>
+      </section>
     </div>
-
-    <!-- 게시판 목록(제목만) -->
-    <ul id="boardList" class="list" aria-live="polite"></ul>
-    <div id="boardEmpty" class="empty" hidden>등록된 게시글이 없습니다.</div>
-
-    <!-- 페이지네이션 -->
-    <nav id="pagination" class="pagination" aria-label="게시판 페이지 탐색"></nav>
-
-    <!-- 글쓰기 -->
-    <div class="form" style="margin-top:18px;">
-      <div class="row">
-        <input id="postTitle" type="text" placeholder="제목" aria-label="게시글 제목" disabled />
-        <input id="postAuthor" type="text" placeholder="작성자" aria-label="게시글 작성자" disabled />
-      </div>
-      <textarea id="postBody" placeholder="내용" aria-label="게시글 내용" disabled></textarea>
-      <button class="btn" id="postBtn" disabled>게시하기</button>
-    </div>
-  </div>
-</section>
-
-
-    </div>
-
 
     <footer>© <span id="year"></span> 대순봄. All rights reserved.</footer>
   </main>
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
+
+  <!-- ===== Firebase: 초기화 블록(단 1곳) ===== -->
+  <script type="module" id="firebase-init">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // ⬇️ 본인 Firebase 설정으로 교체(프로젝트 설정 → 일반 → 내 앱(웹))
+    const firebaseConfig = {
+      apiKey: "AIzaSyBiJ0DkGbirfs242W5nsVEgNroIxjCEHj0",
+      authDomain: "daesoonbom-84743.firebaseapp.com",
+      projectId: "daesoonbom-84743",
+      storageBucket: "daesoonbom-84743.appspot.com",
+      messagingSenderId: "202579781081",
+      appId: "1:202579781081:web:69532923098bef8399e5c8"
+    };
+
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    // 다른 스크립트에서 재사용
+    window.__FIREBASE__ = { app, auth, db, provider };
+  </script>
+
+  <!-- ===== 앱 로직(인증/공지/게시판/페이지네이션) ===== -->
+  <script type="module">
+    import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } 
+      from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import {
+      collection, addDoc, serverTimestamp, query, orderBy, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const { auth, db, provider } = window.__FIREBASE__;
+
+    // 공통
+    const $ = (sel) => document.querySelector(sel);
+    const fmt = (ts) => {
+      try { if (ts?.toDate) return ts.toDate().toLocaleString("ko-KR", { dateStyle:"medium", timeStyle:"short" }); }
+      catch(_) {}
+      return "";
+    };
+    $("#year").textContent = new Date().getFullYear();
+
+    // 헤더 UI
+    const signInBtn  = $("#signInBtn");
+    const signOutBtn = $("#signOutBtn");
+    const userSpan   = $("#userSpan");
+
+    signInBtn?.addEventListener("click", async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        // 팝업 차단 시 리다이렉트로 대체
+        if (e?.code === "auth/popup-blocked" || e?.message?.includes("popup")) {
+          await signInWithRedirect(auth, provider);
+        } else {
+          alert("로그인 실패: " + e.message);
+          console.error(e);
+        }
+      }
+    });
+    signOutBtn?.addEventListener("click", () => signOut(auth));
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userSpan.textContent = `${user.displayName || "사용자"}님 로그인됨`;
+        signInBtn.style.display = "none";
+        signOutBtn.style.display = "inline-flex";
+        // 글쓰기/공지 입력 활성화
+        ["postTitle","postAuthor","postBody","postBtn","noticeTitleInput","noticeAuthorInput","noticeBodyInput","addNoticeBtn"]
+          .forEach(id => { const el = document.getElementById(id); if (el) el.disabled = false; });
+      } else {
+        userSpan.textContent = "로그인하지 않음";
+        signInBtn.style.display = "inline-flex";
+        signOutBtn.style.display = "none";
+        ["postTitle","postAuthor","postBody","postBtn","noticeTitleInput","noticeAuthorInput","noticeBodyInput","addNoticeBtn"]
+          .forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
+      }
+    });
+
+    /* -------------------- 공지 -------------------- */
+    const noticesRef = collection(db, "notices");
+    const noticeUl = $("#noticeList");
+    const noticeEmpty = $("#noticeEmpty");
+
+    onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap) => {
+      noticeUl.innerHTML = "";
+      if (snap.empty){ noticeEmpty.hidden = false; return; }
+      noticeEmpty.hidden = true;
+      snap.forEach(doc => {
+        const n = doc.data();
+        const li = document.createElement("li");
+        li.className = "item";
+        li.innerHTML = `
+          <h3>${n.title}</h3>
+          <div class="meta">
+            <span>작성자: ${n.author || "관리자"}</span>
+            <span>·</span>
+            <span>${fmt(n.createdAt)}</span>
+          </div>
+          <div class="muted">${(n.body||"").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>")}</div>
+        `;
+        noticeUl.appendChild(li);
+      });
+    }, (err) => {
+      alert("공지 불러오기 오류: " + err.message);
+      console.error(err);
+    });
+
+    $("#addNoticeBtn")?.addEventListener("click", async () => {
+      const title = $("#noticeTitleInput").value.trim();
+      const author = $("#noticeAuthorInput").value.trim();
+      const body = $("#noticeBodyInput").value.trim();
+      if (!title || !body) return alert("제목과 내용을 입력해주세요.");
+      try{
+        await addDoc(noticesRef, {
+          title, author, body,
+          uid: (auth.currentUser && auth.currentUser.uid) || "",
+          displayName: (auth.currentUser && auth.currentUser.displayName) || null,
+          createdAt: serverTimestamp()
+        });
+        $("#noticeTitleInput").value = "";
+        $("#noticeAuthorInput").value = "";
+        $("#noticeBodyInput").value = "";
+      }catch(e){ alert("등록 실패: " + e.message); }
+    });
+
+    /* -------------------- 게시판 -------------------- */
+    const postsRef   = collection(db, "posts");
+    const postUl     = $("#boardList");
+    const postEmpty  = $("#boardEmpty");
+    const searchInput= $("#searchInput");
+    const countPill  = $("#countPill");
+    const pagination = $("#pagination");
+
+    const postBtn    = $("#postBtn");
+    const postTitle  = $("#postTitle");
+    const postAuthor = $("#postAuthor");
+    const postBody   = $("#postBody");
+
+    let allPosts = [];
+    let filtered = [];
+    let currentPage = 1;
+    const PAGE_SIZE = 10;
+
+    const renderCount = () => {
+      countPill.textContent = (filtered.length || 0) + "개";
+      postEmpty.hidden = filtered.length > 0;
+    };
+
+    function renderPage(page=1){
+      currentPage = page;
+      postUl.innerHTML = "";
+      if (!filtered.length){ postEmpty.hidden = false; return; }
+      postEmpty.hidden = true;
+
+      const total = filtered.length;
+      const start = (page - 1) * PAGE_SIZE;
+      const end   = Math.min(start + PAGE_SIZE, total);
+      const pageSlice = filtered.slice(start, end);
+
+      pageSlice.forEach((p, idx) => {
+        const globalNo = total - (start + idx);
+
+        const li = document.createElement("li");
+        li.className = "board-item";
+
+        const row = document.createElement("div");
+        row.className = "board-row";
+
+        const no  = document.createElement("div");
+        no.className = "board-no";
+        no.textContent = globalNo;
+
+        const title = document.createElement("a");
+        title.href = "javascript:void(0)";
+        title.className = "board-title";
+        title.textContent = p.title || "(제목 없음)";
+
+        const meta = document.createElement("div");
+        meta.className = "board-meta";
+        meta.textContent = `${p.author || "익명"} · ${fmt(p.createdAt) || ""}`;
+
+        row.appendChild(no);
+        row.appendChild(title);
+        row.appendChild(meta);
+
+        const body = document.createElement("div");
+        body.className = "board-body";
+        body.innerHTML = (p.body || "").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>");
+
+        title.addEventListener("click", () => {
+          // 같은 페이지 내 다른 본문은 닫기
+          postUl.querySelectorAll(".board-body").forEach(el => { if (el !== body) el.style.display = "none"; });
+          body.style.display = (body.style.display === "block") ? "none" : "block";
+        });
+
+        li.appendChild(row);
+        li.appendChild(body);
+        postUl.appendChild(li);
+      });
+    }
+
+    function renderPagination(){
+      pagination.innerHTML = "";
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+      const addBtn = (label, disabled, onClick, isCurrent=false) => {
+        const b = document.createElement("button");
+        b.className = "page-btn";
+        b.textContent = label;
+        if (disabled) b.disabled = true;
+        if (isCurrent) b.setAttribute("aria-current","page");
+        b.addEventListener("click", onClick);
+        pagination.appendChild(b);
+      };
+
+      addBtn("« 이전", currentPage <= 1, () => { if (currentPage > 1) { renderPage(currentPage - 1); renderPagination(); } });
+
+      for (let p = 1; p <= totalPages; p++){
+        addBtn(String(p), false, () => { renderPage(p); renderPagination(); }, p === currentPage);
+      }
+
+      addBtn("다음 »", currentPage >= totalPages, () => { if (currentPage < totalPages) { renderPage(currentPage + 1); renderPagination(); } });
+    }
+
+    function applyFilterAndRender(){
+      const q = (searchInput.value || "").trim().toLowerCase();
+      filtered = q
+        ? allPosts.filter(p => [p.title, p.author, p.body].some(t => (t||"").toLowerCase().includes(q)))
+        : allPosts.slice();
+
+      // createdAt 없을 가능성 대비 정렬 보정
+      filtered.sort((a,b) => {
+        const ad = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const bd = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return bd - ad;
+      });
+
+      renderCount();
+      renderPage(1);
+      renderPagination();
+    }
+
+    // 실시간 구독
+    onSnapshot(query(postsRef, orderBy("createdAt","desc")), (snap) => {
+      allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      applyFilterAndRender();
+    }, (err) => {
+      alert("게시글 불러오기 오류: " + err.message);
+      console.error(err);
+    });
+
+    // 검색
+    searchInput.addEventListener("input", () => { applyFilterAndRender(); });
+
+    // 글쓰기
+    postBtn.addEventListener("click", async () => {
+      const user = auth.currentUser;
+      if (!user) return alert("로그인 후 작성할 수 있습니다.");
+      const title = postTitle.value.trim();
+      const author= postAuthor.value.trim();
+      const body  = postBody.value.trim();
+      if (!title || !body) return alert("제목과 내용을 입력해주세요.");
+
+      try {
+        await addDoc(postsRef, {
+          title, author, body,
+          uid: user.uid,
+          displayName: user.displayName || null,
+          createdAt: serverTimestamp()
+        });
+        postTitle.value = ""; postAuthor.value = ""; postBody.value = "";
+        // 실시간 스냅샷이 자동 반영
+      } catch (e) {
+        alert("등록 실패: " + e.message);
+        console.error(e);
+      }
+    });
   </script>
 </body>
 </html>
