@@ -108,6 +108,69 @@
     .search { display:flex; gap:10px; align-items:center; }
 
     footer{ margin:40px 0 60px; text-align:center; color:var(--muted); font-size:14px; }
+
+
+/* ====================== 모바일 대응 ====================== */
+
+/* 640px 이하 (스마트폰 세로 방향) */
+@media (max-width: 640px) {
+  body {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .container {
+    padding: 14px;
+  }
+
+  header .title {
+    font-size: 18px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr; /* 공지와 게시판을 위아래로 배치 */
+    gap: 16px;
+  }
+
+  .card .inner {
+    padding: 16px;
+  }
+
+  .btn {
+    padding: 10px 12px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+
+  input[type="text"], textarea {
+    font-size: 15px;
+    padding: 10px 12px;
+  }
+
+  .board-no {
+    width: 36px;
+    min-width: 36px;
+    font-size: 12px;
+  }
+
+  .board-title {
+    font-size: 16px;
+  }
+
+  .board-meta {
+    font-size: 11px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+
+
+
+
   </style>
 
   <!-- 참고: Firebase Auth는 '허용된 도메인'에 이 도메인(summer1963bom.github.io)을 추가해야 동작합니다. -->
