@@ -3,445 +3,193 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>대순소식 — 게시판</title>
-  <meta name="description" content="로그인 없이 글 작성 가능한 공지/게시판 (Firebase Firestore)" />
+  <title>대순진리회 소통의 광장</title>
+  <meta name="description" content="대순진리회 소통의 광장 — 공지 및 게시판" />
   <style>
-    :root{
+    :root {
       --bg: #0b1020; --card: #121a32; --muted: #94a3b8; --text: #e5e7eb;
       --accent: #4f46e5; --accent-2: #22d3ee; --ring: rgba(34,211,238,.35);
       --shadow: 0 20px 45px rgba(0,0,0,.35); --radius: 20px;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
-    body{
-      margin:0;
-      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Pretendard, Arial, sans-serif;
-      color:var(--text);
+    body {
+      margin: 0;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: var(--text);
       background: radial-gradient(1200px 600px at 10% 0%, rgba(79,70,229,.25), transparent 60%),
                   radial-gradient(1000px 600px at 90% 0%, rgba(34,211,238,.2), transparent 60%),
                   var(--bg);
-      line-height:1.6;
+      line-height: 1.6;
     }
-    a{ color: var(--accent-2); text-decoration:none; }
-    a:hover{ text-decoration:underline; }
-    header{
-      position:sticky; top:0; z-index:10;
-      backdrop-filter:saturate(1.3) blur(8px);
-      background: linear-gradient(to bottom, rgba(11,16,32,.9), rgba(11,16,32,.5));
-      border-bottom:1px solid rgba(99,102,241,.2);
+    header {
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: blur(8px);
+      background: rgba(11,16,32,.85);
+      border-bottom: 1px solid rgba(99,102,241,.2);
     }
-    .container{ max-width:1100px; margin:0 auto; padding:24px; }
-    .brand{ display:flex; align-items:center; gap:14px; }
-    .logo{
-      width:36px; height:36px; border-radius:50%;
-      background: radial-gradient(circle at 30% 20%, #22d3ee, #4f46e5);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.15), 0 4px 16px rgba(34,211,238,.35);
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .title { font-weight: 800; letter-spacing: -0.02em; font-size: 22px; }
+    .muted { color: var(--muted); }
+    .card {
+      background: rgba(18,26,50,.9);
+      border: 1px solid rgba(148,163,184,.15);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-top: 24px;
     }
-    .title{ font-weight:800; letter-spacing:-.02em; font-size:22px; }
-    .container .muted{ color:var(--muted); }
-    .grid{ display:grid; gap:24px; margin-top:24px; grid-template-columns: 1.1fr .9fr; }
-    @media (max-width: 960px){ .grid{ grid-template-columns:1fr; } }
-    .card{
-      background: linear-gradient(180deg, rgba(18,26,50,.9), rgba(18,26,50,.8));
-      border:1px solid rgba(148,163,184,.12);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-    }
-    .card .inner{ padding:24px; }
-    .card h2{ margin:0 0 12px; font-size:22px; letter-spacing:-.01em; }
-    .list{ display:grid; gap:12px; padding:0; margin:0; list-style:none; }
-    .item{ border:1px solid rgba(148,163,184,.12); border-radius:14px; padding:14px 16px; background: linear-gradient(180deg, rgba(18,26,50,.65), rgba(18,26,50,.5)); }
-    .item h3{ margin:0 0 6px; font-size:18px; }
-    .meta{ display:flex; gap:10px; font-size:12px; color:var(--muted); }
-    .empty{ color:var(--muted); padding:12px; border:1px dashed rgba(148,163,184,.3); border-radius:12px; text-align:center; }
-    .form{ display:grid; gap:10px; margin-top:14px; }
-    .row{ display:grid; gap:10px; grid-template-columns:1fr 1fr; }
-    @media (max-width:640px){ .row{ grid-template-columns:1fr; } }
-    input[type="text"], textarea{
-      width:100%; padding:12px 14px; border-radius:12px;
-      border:1px solid rgba(148,163,184,.25); background:rgba(255,255,255,.03); color:var(--text);
-      outline:none; transition: box-shadow .15s ease, border-color .15s ease;
-    }
-    input[type="text"]:focus, textarea:focus{ border-color:var(--accent-2); box-shadow:0 0 0 4px var(--ring); }
-    textarea{ min-height:110px; resize:vertical; }
-
-    /* 게시판 목록(제목만) */
-    .board-item { padding: 10px 14px; border:1px solid rgba(148,163,184,.18); border-radius:12px; }
-    .board-row { display:flex; gap:12px; align-items:center; }
-    .board-no   { width: 48px; min-width:48px; text-align:center; font-weight:700; color:#cdd5e1; border:1px solid rgba(148,163,184,.25); border-radius:10px; padding:6px 0; }
-    .board-title { cursor:pointer; font-weight:700; text-decoration:none; }
-    .board-title:hover { text-decoration:underline; }
-    .board-meta { margin-left:auto; font-size:12px; color:#94a3b8; }
-    .board-body { display:none; margin-top:10px; color:#cbd5e1; }
-
-    .pagination { display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
-    .page-btn {
-      border:1px solid rgba(148,163,184,.25); background:rgba(255,255,255,.03);
-      padding:8px 12px; border-radius:10px; cursor:pointer;
-    }
-    .page-btn[aria-current="page"] { font-weight:800; border-color:#22d3ee; box-shadow:0 0 0 3px rgba(34,211,238,.25); }
-    .page-btn:disabled { opacity:.5; cursor:not-allowed; }
-
-    .pill { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: rgba(34,211,238,.16); border: 1px solid rgba(34,211,238,.35); color: #c0f6ff; }
-    .search { display:flex; gap:10px; align-items:center; }
-
-    /* 모바일 보완 */
-    @media (max-width: 640px){
-      .container{ padding:14px; }
-      .card .inner{ padding:16px; }
-      .row{ grid-template-columns:1fr; }
-      .board-no{ width:36px; min-width:36px; font-size:12px; }
-      .board-title{ font-size:16px; }
-      .board-meta{ font-size:11px; }
-    }
-    footer{ margin:40px 0 60px; text-align:center; color:var(--muted); font-size:14px; }
-  /* ==== enhanced typography helpers ==== */
-.lead{ font-size:1.1rem; line-height:1.8; }
-.divider{ border:0; border-top:1px solid rgba(148,163,184,.25); margin:14px 0 18px; }
-.prose{ display:grid; gap:12px; }
-.hero-title{ font-size:28px; letter-spacing:-.02em; margin:0; }
-.callout{ border:1px solid rgba(250,204,21,.35); background:linear-gradient(180deg, rgba(250,204,21,.08), rgba(250,204,21,.03)); 
-          color:#fde68a; padding:14px; border-radius:14px; }
-.callout strong{ color:#fff; }
-.checklist{ counter-reset: step; list-style:none; padding:0; display:grid; gap:10px; }
-.checklist li{ position:relative; padding:10px 12px 10px 40px; border:1px solid rgba(148,163,184,.18); border-radius:12px;
-               background:rgba(255,255,255,.03); }
-.checklist li::before{ counter-increment: step; content: counter(step); position:absolute; left:10px; top:10px; 
-                       width:22px; height:22px; border-radius:8px; display:grid; place-items:center;
-                       border:1px solid rgba(148,163,184,.35); color:#cbd5e1; font-weight:700; font-size:12px; }
-blockquote{ margin:0; padding:10px 14px; border-left:4px solid var(--accent-2); background:rgba(34,211,238,.06); border-radius:8px; }
-.center{ text-align:center; }
-.small{ font-size:.95rem; color:var(--muted); }
-.kicker{ text-transform:uppercase; letter-spacing:.12em; font-size:.75rem; color:#a5b4fc; }
-.summary-grid{ display:grid; gap:10px; }
-@media (max-width:640px){
-  .hero-title{ font-size:24px; }
-  .lead{ font-size:1rem; }
-}
-</style>
+    .card .inner { padding: 24px; }
+    h1,h2,h3 { margin: 0 0 12px; }
+    .list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+    .item { border: 1px solid rgba(148,163,184,.18); border-radius: 12px; padding: 12px 16px; background: rgba(255,255,255,.02); }
+    .board-row { display: flex; align-items: center; gap: 10px; }
+    .board-no { background: rgba(34,211,238,.15); border: 1px solid rgba(34,211,238,.3); color: #a5f3fc; border-radius: 8px; padding: 4px 8px; font-size: 12px; }
+    .board-title { cursor: pointer; font-weight: 700; color: #e0e7ff; }
+    .board-title:hover { text-decoration: underline; }
+    .board-meta { margin-left: auto; font-size: 12px; color: var(--muted); }
+    .board-body { display: none; margin-top: 10px; color: #cbd5e1; white-space: pre-line; }
+    .page-btn { border: 1px solid rgba(148,163,184,.25); background: rgba(255,255,255,.03); padding: 6px 10px; border-radius: 10px; cursor: pointer; }
+    .page-btn[aria-current="page"] { border-color: #22d3ee; font-weight: 700; }
+    .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+    footer { text-align: center; color: var(--muted); font-size: 14px; margin: 40px 0; }
+  </style>
 </head>
 <body>
-  <header>
-    <div class="container brand">
-      <div class="logo" aria-hidden="true"></div>
-      <div class="title">대순소식</div>
-      <span class="muted" style="margin-left:auto;">로그인 없이 글 작성 가능</span>
+<header>
+  <div class="container">
+    <div class="title">대순진리회 소통의 광장</div>
+  </div>
+</header>
+
+<main class="container">
+  <!-- 공지 -->
+  <section class="card">
+    <div class="inner">
+      <h2>공지</h2>
+      <ul id="noticeList" class="list"></ul>
+      <div id="noticeEmpty" class="muted">등록된 공지가 없습니다.</div>
     </div>
-  </header>
+  </section>
 
-  <main class="container">
-    <section class="card">
-      <div class="inner">
-        <div class="prose">
-  <span class="kicker">Communication Plaza</span>
-  <h1 class="hero-title">대순진리회 소통의 광장</h1>
-  <p class="lead muted">도인 여러분의 소식을 기다립니다</p>
-  <hr class="divider"/>
-
-  <h3>때가 왔습니다.</h3>
-  <p>오늘 우리가 이 자리에 모인 것은 분노나 분열을 위함이 아닙니다. 오직 진리의 길을 바로 세우고, 도전님의 참뜻을 지켜내기 위함입니다.</p>
-  <p>종단은 한 개인의 사유물이 아닙니다. 이는 도전님께서 온 생애를 바쳐 일구신 만수 도인들의 영원한 구도의 전당이며, 후천개벽의 큰 뜻을 이루어갈 신성한 터전입니다. 그러나 지금 이 순간, 그 거룩한 법도가 무너지고 있습니다.</p>
-  <div class="callout">
-    <strong>난법난도(亂法亂道)의 행위 앞에서 침묵하는 것은 방관이 아니라 공범입니다.</strong><br/>
-    <strong>진실을 외면하는 것은 중립이 아니라 배신입니다.</strong>
-  </div>
-
-  <h3>우리는 선택해야 합니다</h3>
-  <blockquote>
-    <p class="small">편안한 침묵 속에서 종단이 무너지는 것을 지켜볼 것인가,<br/>
-    아니면 떨리는 목소리로라도 정의를 외치며 바른 길을 개척할 것인가.</p>
-  </blockquote>
-  <p>역사는 늘 소수의 깨어있는 자들에 의해 바로 세워졌습니다. 오늘 우리가 외면한 불의는 내일 짊어져야 할 업보가 될 것입니다.</p>
-
-  <h3>이 사이트가 존재하는 이유</h3>
-  <ol class="checklist">
-    <li><strong>종단의 법과 제도를 바르게 알려야 합니다.</strong><br/>무지는 불의의 가장 든든한 동맹입니다. 진실을 아는 것이 변화의 시작입니다.</li>
-    <li><strong>우리가 살아 있는 동안 종단 정상화를 위한 노력을 다해야 합니다.</strong><br/>다음 생을 기약할 수는 없습니다. 지금 이 순간이 우리에게 주어진 유일한 기회입니다.</li>
-    <li><strong>도전님께서 납실 때까지 종단이 법과 제도에 따라 바르게 운영될 수 있도록 해야 합니다.</strong><br/>이것은 도인으로서의 의무이며, 도문소자로서의 마지막 책무입니다.</li>
-  </ol>
-
-  <h3>두려워하지 맙시다</h3>
-  <p>정의를 외치는 자가 오히려 비난받는 세상입니다. 그러나 진리는 다수결로 정해지지 않으며, 정의는 힘 있는 자의 편의로 왜곡되지 않습니다.</p>
-  <p>우리의 목소리가 작을지라도, 우리의 힘이 미약할지라도, 진실은 스스로 빛을 발합니다. 한 사람의 용기가 열 사람을 일으키고, 열 사람의 결의가 백 사람의 마음을 움직입니다.</p>
-
-  <h3>함께 걸어갑시다</h3>
-  <div class="summary-grid">
-    <div class="item"><strong>회복의 광장</strong> — 이곳은 고발의 장이 아니라 회복의 광장입니다.</div>
-    <div class="item"><strong>각성의 도량</strong> — 분노의 공간이 아니라 각성의 도량입니다.</div>
-    <div class="item"><strong>재건의 밀알</strong> — 파괴의 도구가 아니라 재건의 밀알입니다.</div>
-  </div>
-  <p>여러분의 목소리를 들려주십시오. 여러분이 아는 진실을 나누어 주십시오. 여러분의 양심이 명령하는 바를 실천해 주십시오.<br/>
-  종단의 정상화는 누군가 대신 해줄 수 없습니다. 도전님의 뜻을 지키는 것은 바로 우리, 살아있는 도인들의 책임입니다.</p>
-
-  <h3>역사 앞에 선 우리</h3>
-  <p>이제 우리는 역사 앞에 서 있습니다. 후대는 물을 것입니다. “그때 당신은 무엇을 했습니까?”<br/>
-  오늘 우리의 선택이 그 답이 될 것입니다. 바른 길을 함께 걸어갑시다.</p>
-
-  <p class="center"><strong>대순진리회 도인 여러분의 많은 의견을 모읍시다</strong><br/>
-  <span class="small">대운대통(大運大通)의 그날까지, 도전님의 참뜻이 온전히 실현되는 그날까지 우리는 멈추지 않을 것입니다.</span></p>
-</div>
-      </div>
-    </section>
-
-    <div class="grid">
-<!-- 공지 -->
-<section class="card" aria-labelledby="noticeTitle">
-  <div class="inner">
-    <h2 id="noticeTitle">공지</h2>
-    <ul id="noticeList" class="list" aria-live="polite"></ul>
-    <div id="noticeEmpty" class="empty" hidden>등록된 공지가 없습니다.</div>
-  </div>
-</section>
-
-      <!-- 게시판 -->
-      <section class="card" aria-labelledby="boardTitle">
-        <div class="inner">
-          <h2 id="boardTitle">게시판</h2>
-
-          <div class="search" style="margin-bottom:10px;">
-            <input id="searchInput" type="text" placeholder="검색: 제목/작성자/내용" aria-label="게시판 검색" />
-            <span class="pill" id="countPill">0개</span>
-          </div>
-
-          <!-- 제목만 보이는 목록 -->
-          <ul id="boardList" class="list" aria-live="polite"></ul>
-          <div id="boardEmpty" class="empty" hidden>등록된 게시글이 없습니다.</div>
-
-          <!-- 페이지네이션 -->
-          <nav id="pagination" class="pagination" aria-label="게시판 페이지 탐색"></nav>
-
-          <!-- 글쓰기 -->
-          <div class="form" style="margin-top:18px;">
-            <div class="row">
-              <input id="postTitle" type="text" placeholder="제목" aria-label="게시글 제목" />
-              <input id="postAuthor" type="text" placeholder="작성자" aria-label="게시글 작성자" />
-            </div>
-            <textarea id="postBody" placeholder="내용" aria-label="게시글 내용"></textarea>
-            <button class="btn" id="postBtn">게시하기</button>
-          </div>
-        </div>
-      </section>
+  <!-- 게시판 -->
+  <section class="card">
+    <div class="inner">
+      <h2>게시판</h2>
+      <ul id="boardList" class="list"></ul>
+      <div id="boardEmpty" class="muted">등록된 게시글이 없습니다.</div>
+      <nav id="pagination" class="pagination"></nav>
     </div>
+  </section>
+</main>
 
-    <footer>© <span id="year"></span> 대순소식. All rights reserved.</footer>
-  </main>
+<footer>© 2025 대순진리회 소통의 광장</footer>
 
-  <!-- ===== Firebase 초기화(앱 1회) & Firestore만 사용 ===== -->
-  <script type="module" id="firebase-init">
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // ⬇️ 본인 Firebase 설정으로 교체(프로젝트 설정 → 일반 → 내 앱(웹))
-    const firebaseConfig = {
-      apiKey: "AIzaSyBiJ0DkGbirfs242W5nsVEgNroIxjCEHj0",
-      authDomain: "daesoonbom-84743.firebaseapp.com",
-      projectId: "daesoonbom-84743",
-      storageBucket: "daesoonbom-84743.appspot.com",
-      messagingSenderId: "202579781081",
-      appId: "1:202579781081:web:69532923098bef8399e5c8"
-    };
+// Firebase 설정
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
 
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
-
-    // 전역 노출
-    window.__FIREBASE__ = { app, db };
-  </script>
-
-  <!-- ===== 앱 로직 (공지/게시판/페이지네이션) — Auth 제거 버전 ===== -->
-  <script type="module">
-    import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot }
-      from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-    const { db } = window.__FIREBASE__;
-
-    const $ = (sel) => document.querySelector(sel);
-    $("#year").textContent = new Date().getFullYear();
-    const fmt = (ts) => { try { if (ts?.toDate) return ts.toDate().toLocaleString("ko-KR",{dateStyle:"medium", timeStyle:"short"});} catch(_){} return ""; };
+const fmt = (ts) => ts?.toDate ? ts.toDate().toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" }) : "";
 
 /* -------------------- 공지 -------------------- */
 const noticesRef = collection(db, "notices");
-const noticeUl = $("#noticeList");
-const noticeEmpty = $("#noticeEmpty");
+const noticeUl = document.getElementById("noticeList");
+const noticeEmpty = document.getElementById("noticeEmpty");
 
 onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap) => {
   noticeUl.innerHTML = "";
-  if (snap.empty) { noticeEmpty.hidden = false; return; }
-  noticeEmpty.hidden = true;
-
+  if (snap.empty) { noticeEmpty.style.display = "block"; return; }
+  noticeEmpty.style.display = "none";
   snap.forEach(doc => {
     const n = doc.data();
     const li = document.createElement("li");
     li.className = "item";
-
-    // 제목행
-    const title = document.createElement("div");
-    title.className = "board-row";
-    title.innerHTML = `
+    const titleDiv = document.createElement("div");
+    titleDiv.className = "board-row";
+    titleDiv.innerHTML = `
       <div class="board-no">공지</div>
-      <div class="board-title" style="cursor:pointer;font-weight:700;">${n.title}</div>
+      <div class="board-title">${n.title}</div>
       <div class="board-meta">${fmt(n.createdAt)}</div>
     `;
-
-    // 본문
-    const body = document.createElement("div");
-    body.className = "board-body";
-    body.innerHTML = (n.body || "").replaceAll("<","&lt;")
-                                   .replaceAll(">","&gt;")
-                                   .replaceAll("\n","<br>");
-    body.style.display = "none";
-
-    // 클릭시 토글
-    title.querySelector(".board-title").addEventListener("click", () => {
-      body.style.display = body.style.display === "block" ? "none" : "block";
+    const bodyDiv = document.createElement("div");
+    bodyDiv.className = "board-body";
+    bodyDiv.innerHTML = (n.body || "").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>");
+    titleDiv.querySelector(".board-title").addEventListener("click", () => {
+      bodyDiv.style.display = bodyDiv.style.display === "block" ? "none" : "block";
     });
-
-    li.appendChild(title);
-    li.appendChild(body);
+    li.appendChild(titleDiv);
+    li.appendChild(bodyDiv);
     noticeUl.appendChild(li);
   });
 });
 
-    /* -------------------- 게시판 -------------------- */
-    const postsRef   = collection(db, "posts");
-    const postUl     = $("#boardList");
-    const postEmpty  = $("#boardEmpty");
-    const searchInput= $("#searchInput");
-    const countPill  = $("#countPill");
-    const pagination = $("#pagination");
+/* -------------------- 게시판 -------------------- */
+const postsRef = collection(db, "posts");
+const postUl = document.getElementById("boardList");
+const boardEmpty = document.getElementById("boardEmpty");
+const pagination = document.getElementById("pagination");
 
-    const postBtn    = $("#postBtn");
-    const postTitle  = $("#postTitle");
-    const postAuthor = $("#postAuthor");
-    const postBody   = $("#postBody");
+let allPosts = [];
+let currentPage = 1;
+const PAGE_SIZE = 5;
 
-    // (선택) 간단 스팸 방지: 금지어 + 쿨다운
-    const BLOCKLIST = [/viagra/i,/카지노/i,/https?:\/\/\S+/i]; // 필요시 확장
-    const POST_COOLDOWN_MS = 45 * 1000; // 45초
-    const tooSoon = () => Date.now() - (Number(localStorage.getItem("lastPostAt")||0)) < POST_COOLDOWN_MS;
-    const hasBlocked = (t,b) => BLOCKLIST.some(rx => rx.test((t||"")+ "\n" + (b||"")));
-
-    let allPosts = [];
-    let filtered = [];
-    let currentPage = 1;
-    const PAGE_SIZE = 10;
-
-    const renderCount = () => { countPill.textContent = (filtered.length||0) + "개"; postEmpty.hidden = filtered.length>0; };
-
-    function renderPage(page=1){
-      currentPage = page;
-      postUl.innerHTML = "";
-      if (!filtered.length){ postEmpty.hidden = false; return; }
-      postEmpty.hidden = true;
-
-      const total = filtered.length;
-      const start = (page - 1) * PAGE_SIZE;
-      const end   = Math.min(start + PAGE_SIZE, total);
-      const pageSlice = filtered.slice(start, end);
-
-      pageSlice.forEach((p, idx) => {
-        const globalNo = total - (start + idx);
-
-        const li = document.createElement("li");
-        li.className = "board-item";
-
-        const row = document.createElement("div");
-        row.className = "board-row";
-
-        const no  = document.createElement("div");
-        no.className = "board-no";
-        no.textContent = globalNo;
-
-        const title = document.createElement("a");
-        title.href = "javascript:void(0)";
-        title.className = "board-title";
-        title.textContent = p.title || "(제목 없음)";
-
-        const meta = document.createElement("div");
-        meta.className = "board-meta";
-        meta.textContent = `${p.author || "익명"} · ${fmt(p.createdAt) || ""}`;
-
-        row.appendChild(no);
-        row.appendChild(title);
-        row.appendChild(meta);
-
-        const body = document.createElement("div");
-        body.className = "board-body";
-        body.innerHTML = (p.body || "").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>");
-
-        title.addEventListener("click", () => {
-          postUl.querySelectorAll(".board-body").forEach(el => { if (el !== body) el.style.display = "none"; });
-          body.style.display = (body.style.display === "block") ? "none" : "block";
-        });
-
-        li.appendChild(row);
-        li.appendChild(body);
-        postUl.appendChild(li);
-      });
-    }
-
-    function renderPagination(){
-      pagination.innerHTML = "";
-      const total = filtered.length;
-      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-      const addBtn = (label, disabled, onClick, isCurrent=false) => {
-        const b = document.createElement("button");
-        b.className = "page-btn"; b.textContent = label;
-        if (disabled) b.disabled = true;
-        if (isCurrent) b.setAttribute("aria-current","page");
-        b.addEventListener("click", onClick);
-        pagination.appendChild(b);
-      };
-      addBtn("« 이전", currentPage<=1, ()=>{ if(currentPage>1){ renderPage(currentPage-1); renderPagination(); }});
-      for (let p=1; p<=totalPages; p++){ addBtn(String(p), false, ()=>{ renderPage(p); renderPagination(); }, p===currentPage); }
-      addBtn("다음 »", currentPage>=totalPages, ()=>{ if(currentPage<totalPages){ renderPage(currentPage+1); renderPagination(); }});
-    }
-
-    function applyFilterAndRender(){
-      const q = (searchInput.value || "").trim().toLowerCase();
-      filtered = (q
-        ? allPosts.filter(p => [p.title, p.author, p.body].some(t => (t||"").toLowerCase().includes(q)))
-        : allPosts.slice()
-      ).filter(p => !hasBlocked(p.title, p.body)); // 금지어 렌더 차단
-      filtered.sort((a,b) => {
-        const ad = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-        const bd = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-        return bd - ad;
-      });
-      renderCount(); renderPage(1); renderPagination();
-    }
-
-    onSnapshot(query(postsRef, orderBy("createdAt","desc")), (snap) => {
-      allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      applyFilterAndRender();
-    }, (err) => alert("게시글 불러오기 오류: " + err.message));
-
-    searchInput.addEventListener("input", () => applyFilterAndRender());
-
-    postBtn.addEventListener("click", async () => {
-      const title = postTitle.value.trim();
-      const author= postAuthor.value.trim();
-      const body  = postBody.value.trim();
-      if (!title || !body) return alert("제목과 내용을 입력해주세요.");
-      if (hasBlocked(title, body)) return alert("금지된 문구(또는 링크)가 포함되어 게시할 수 없습니다.");
-      if (tooSoon()) {
-        const last = Number(localStorage.getItem("lastPostAt")||0);
-        const left = Math.ceil((POST_COOLDOWN_MS - (Date.now()-last))/1000);
-        return alert(`잠시 후 다시 시도해주세요. (${left}초)`);
-      }
-      try {
-        await addDoc(postsRef, {
-          title, author, body,
-          createdAt: serverTimestamp()
-        });
-        localStorage.setItem("lastPostAt", Date.now());
-        postTitle.value = ""; postAuthor.value = ""; postBody.value = "";
-      } catch (e) {
-        alert("등록 실패: " + e.message);
-      }
+function renderPage(page = 1) {
+  postUl.innerHTML = "";
+  const start = (page - 1) * PAGE_SIZE;
+  const pagePosts = allPosts.slice(start, start + PAGE_SIZE);
+  if (pagePosts.length === 0) { boardEmpty.style.display = "block"; return; }
+  boardEmpty.style.display = "none";
+  pagePosts.forEach((p, idx) => {
+    const li = document.createElement("li");
+    li.className = "item";
+    const row = document.createElement("div");
+    row.className = "board-row";
+    row.innerHTML = `
+      <div class="board-no">${allPosts.length - (start + idx)}</div>
+      <div class="board-title">${p.title}</div>
+      <div class="board-meta">${p.author || "익명"} · ${fmt(p.createdAt)}</div>`;
+    const body = document.createElement("div");
+    body.className = "board-body";
+    body.innerHTML = (p.body || "").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>");
+    row.querySelector(".board-title").addEventListener("click", () => {
+      body.style.display = body.style.display === "block" ? "none" : "block";
     });
-  </script>
+    li.appendChild(row);
+    li.appendChild(body);
+    postUl.appendChild(li);
+  });
+  renderPagination(page);
+}
+
+function renderPagination(page) {
+  pagination.innerHTML = "";
+  const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
+  for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement("button");
+    btn.className = "page-btn";
+    btn.textContent = i;
+    if (i === page) btn.setAttribute("aria-current", "page");
+    btn.addEventListener("click", () => { currentPage = i; renderPage(i); });
+    pagination.appendChild(btn);
+  }
+}
+
+onSnapshot(query(postsRef, orderBy("createdAt","desc")), (snap) => {
+  allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderPage(1);
+});
+</script>
 </body>
 </html>
