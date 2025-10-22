@@ -185,23 +185,14 @@ blockquote{ margin:0; padding:10px 14px; border-left:4px solid var(--accent-2); 
     </section>
 
     <div class="grid">
-      <!-- 공지 -->
-      <section class="card" aria-labelledby="noticeTitle">
-        <div class="inner">
-          <h2 id="noticeTitle">공지</h2>
-          <ul id="noticeList" class="list" aria-live="polite"></ul>
-          <div id="noticeEmpty" class="empty" hidden>등록된 공지가 없습니다.</div>
-          <details class="form" style="margin-top:12px;">
-            <summary class="muted">공지 추가하기</summary>
-            <div class="row">
-              <input id="noticeTitleInput" type="text" placeholder="제목" aria-label="공지 제목" />
-              <input id="noticeAuthorInput" type="text" placeholder="작성자" aria-label="공지 작성자" />
-            </div>
-            <textarea id="noticeBodyInput" placeholder="내용" aria-label="공지 내용"></textarea>
-            <button class="btn" id="addNoticeBtn">공지 등록</button>
-          </details>
-        </div>
-      </section>
+<!-- 공지 -->
+<section class="card" aria-labelledby="noticeTitle">
+  <div class="inner">
+    <h2 id="noticeTitle">공지</h2>
+    <ul id="noticeList" class="list" aria-live="polite"></ul>
+    <div id="noticeEmpty" class="empty" hidden>등록된 공지가 없습니다.</div>
+  </div>
+</section>
 
       <!-- 게시판 -->
       <section class="card" aria-labelledby="boardTitle">
@@ -270,47 +261,48 @@ blockquote{ margin:0; padding:10px 14px; border-left:4px solid var(--accent-2); 
     $("#year").textContent = new Date().getFullYear();
     const fmt = (ts) => { try { if (ts?.toDate) return ts.toDate().toLocaleString("ko-KR",{dateStyle:"medium", timeStyle:"short"});} catch(_){} return ""; };
 
-    /* -------------------- 공지 -------------------- */
-    const noticesRef = collection(db, "notices");
-    const noticeUl = $("#noticeList");
-    const noticeEmpty = $("#noticeEmpty");
+/* -------------------- 공지 -------------------- */
+const noticesRef = collection(db, "notices");
+const noticeUl = $("#noticeList");
+const noticeEmpty = $("#noticeEmpty");
 
-    onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap) => {
-      noticeUl.innerHTML = "";
-      if (snap.empty){ noticeEmpty.hidden = false; return; }
-      noticeEmpty.hidden = true;
-      snap.forEach(doc => {
-        const n = doc.data();
-        const li = document.createElement("li");
-        li.className = "item";
-        li.innerHTML = `
-          <h3>${n.title}</h3>
-          <div class="meta">
-            <span>작성자: ${n.author || "익명"}</span>
-            <span>·</span>
-            <span>${fmt(n.createdAt)}</span>
-          </div>
-          <div class="muted">${(n.body||"").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>")}</div>
-        `;
-        noticeUl.appendChild(li);
-      });
-    }, (err) => alert("공지 불러오기 오류: " + err.message));
+onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap) => {
+  noticeUl.innerHTML = "";
+  if (snap.empty) { noticeEmpty.hidden = false; return; }
+  noticeEmpty.hidden = true;
 
-    $("#addNoticeBtn")?.addEventListener("click", async () => {
-      const title = $("#noticeTitleInput").value.trim();
-      const author = $("#noticeAuthorInput").value.trim();
-      const body = $("#noticeBodyInput").value.trim();
-      if (!title || !body) return alert("제목과 내용을 입력해주세요.");
-      try{
-        await addDoc(noticesRef, {
-          title, author, body,
-          createdAt: serverTimestamp()
-        });
-        $("#noticeTitleInput").value = "";
-        $("#noticeAuthorInput").value = "";
-        $("#noticeBodyInput").value = "";
-      }catch(e){ alert("등록 실패: " + e.message); }
+  snap.forEach(doc => {
+    const n = doc.data();
+    const li = document.createElement("li");
+    li.className = "item";
+
+    // 제목행
+    const title = document.createElement("div");
+    title.className = "board-row";
+    title.innerHTML = `
+      <div class="board-no">공지</div>
+      <div class="board-title" style="cursor:pointer;font-weight:700;">${n.title}</div>
+      <div class="board-meta">${fmt(n.createdAt)}</div>
+    `;
+
+    // 본문
+    const body = document.createElement("div");
+    body.className = "board-body";
+    body.innerHTML = (n.body || "").replaceAll("<","&lt;")
+                                   .replaceAll(">","&gt;")
+                                   .replaceAll("\n","<br>");
+    body.style.display = "none";
+
+    // 클릭시 토글
+    title.querySelector(".board-title").addEventListener("click", () => {
+      body.style.display = body.style.display === "block" ? "none" : "block";
     });
+
+    li.appendChild(title);
+    li.appendChild(body);
+    noticeUl.appendChild(li);
+  });
+});
 
     /* -------------------- 게시판 -------------------- */
     const postsRef   = collection(db, "posts");
