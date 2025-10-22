@@ -326,7 +326,7 @@ onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap) => {
     let allPosts = [];
     let filtered = [];
     let currentPage = 1;
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 5;
 
     const renderCount = () => { countPill.textContent = (filtered.length||0) + "개"; postEmpty.hidden = filtered.length>0; };
 
