@@ -107,15 +107,15 @@ import {
   doc, getDoc, setDoc, updateDoc, increment, where, getDocs
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// Firebase 설정(본인 값으로 교체)
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
+    // ⬇️ 본인 Firebase 설정으로 교체(프로젝트 설정 → 일반 → 내 앱(웹))
+    const firebaseConfig = {
+      apiKey: "AIzaSyBiJ0DkGbirfs242W5nsVEgNroIxjCEHj0",
+      authDomain: "daesoonbom-84743.firebaseapp.com",
+      projectId: "daesoonbom-84743",
+      storageBucket: "daesoonbom-84743.appspot.com",
+      messagingSenderId: "202579781081",
+      appId: "1:202579781081:web:69532923098bef8399e5c8"
+    };
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
