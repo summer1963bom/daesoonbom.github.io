@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>대순진리회 소통의 광장</title>
-  <meta name="description" content="대순진리회 소통의 광장 — 공지 및 게시판" />
+  <title>대순소식 — 게시판</title>
+  <meta name="description" content="로그인 없이 글 작성 가능한 공지/게시판 (Firebase Firestore)" />
   <style>
     :root{
       --bg:#0b1020; --card:#121a32; --muted:#94a3b8; --text:#e5e7eb;
@@ -23,12 +23,13 @@
       line-height:1.6;
     }
     header{position:sticky;top:0;z-index:10;backdrop-filter:blur(8px);background:rgba(11,16,32,.85);border-bottom:1px solid rgba(99,102,241,.2)}
-    .wrap{max-width:1100px;margin:0 auto;padding:22px}
-    .title-row{display:flex;align-items:center;gap:12px}
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    .brand{display:flex;align-items:center;gap:14px}
     .title{font-weight:800;letter-spacing:-.02em;font-size:22px}
     .pill{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid rgba(34,211,238,.35);background:rgba(34,211,238,.12);color:#bbf7fe}
-    .muted{color:var(--muted)}
-    .card{background:rgba(18,26,50,.9);border:1px solid rgba(148,163,184,.15);border-radius:var(--r);box-shadow:var(--shadow);margin:22px 0 0}
+    .grid{display:grid;gap:24px;margin-top:24px;grid-template-columns:1.1fr .9fr}
+    @media (max-width: 960px){ .grid{ grid-template-columns:1fr; } }
+    .card{background:rgba(18,26,50,.9);border:1px solid rgba(148,163,184,.15);border-radius:var(--r);box-shadow:var(--shadow)}
     .inner{padding:22px}
     h1,h2,h3{margin:0 0 12px}
     .list{list-style:none;padding:0;margin:0;display:grid;gap:12px}
@@ -37,7 +38,7 @@
     .no{background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.3);color:#a5f3fc;border-radius:8px;padding:4px 8px;font-size:12px}
     .tit{cursor:pointer;font-weight:700;color:#e0e7ff}
     .tit:hover{text-decoration:underline}
-    .meta{margin-left:auto;font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center}
+    .meta{margin-left:auto;font-size:12px;color:#94a3b8;display:flex;gap:10px;align-items:center}
     .views{font-size:12px;color:#cbd5e1}
     .body{display:none;margin-top:10px;color:#cbd5e1;white-space:pre-line}
     .pagination{display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap}
@@ -50,55 +51,49 @@
       width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(148,163,184,.25);
       background:rgba(255,255,255,.03);color:var(--text);outline:none;
     }
-    input[type=text]:focus, textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 4px var(--ring)}
+    input[type=text]:focus, textarea:focus{border-color:#22d3ee;box-shadow:0 0 0 4px var(--ring)}
     textarea{min-height:110px;resize:vertical}
-    .btn{border:1px solid rgba(148,163,184,.28);background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      padding:10px 14px;border-radius:12px;color:#e5e7eb;cursor:pointer}
-    footer{text-align:center;color:var(--muted);font-size:14px;margin:40px 0}
+    .btn{border:1px solid rgba(148,163,184,.28);background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));padding:10px 14px;border-radius:12px;color:#e5e7eb;cursor:pointer}
+    footer{text-align:center;color:#94a3b8;font-size:14px;margin:40px 0}
   </style>
 </head>
 <body>
 <header>
-  <div class="wrap">
-    <div class="title-row">
-      <div class="title">대순진리회 소통의 광장</div>
-      <span id="homeViews" class="pill" title="홈 조회수">조회수 0</span>
-    </div>
+  <div class="container brand">
+    <div class="title">대순소식 — 게시판</div>
+    <span id="homeViews" class="pill">조회수 0</span>
   </div>
 </header>
 
-<main class="wrap">
-  <!-- 공지 -->
-  <section class="card">
-    <div class="inner">
-      <h2>공지</h2>
-      <ul id="noticeList" class="list" aria-live="polite"></ul>
-      <div id="noticeEmpty" class="muted">등록된 공지가 없습니다.</div>
-    </div>
-  </section>
-
-  <!-- 게시판 -->
+<main class="container grid">
   <section class="card">
     <div class="inner">
       <h2>게시판</h2>
-      <ul id="boardList" class="list" aria-live="polite"></ul>
+      <ul id="boardList" class="list"></ul>
       <div id="boardEmpty" class="muted">등록된 게시글이 없습니다.</div>
-      <nav id="pagination" class="pagination" aria-label="게시판 페이지"></nav>
+      <nav id="pagination" class="pagination"></nav>
 
-      <!-- 글쓰기 -->
       <div class="form">
         <div class="row2">
-          <input id="postTitle" type="text" placeholder="제목" aria-label="게시글 제목" />
-          <input id="postAuthor" type="text" placeholder="작성자 (선택)" aria-label="게시글 작성자" />
+          <input id="postTitle" type="text" placeholder="제목" />
+          <input id="postAuthor" type="text" placeholder="작성자 (선택)" />
         </div>
-        <textarea id="postBody" placeholder="내용" aria-label="게시글 내용"></textarea>
+        <textarea id="postBody" placeholder="내용"></textarea>
         <button class="btn" id="postBtn">게시하기</button>
       </div>
     </div>
   </section>
+
+  <aside class="card">
+    <div class="inner">
+      <h2>공지</h2>
+      <ul id="noticeList" class="list"></ul>
+      <div id="noticeEmpty" class="muted">등록된 공지가 없습니다.</div>
+    </div>
+  </aside>
 </main>
 
-<footer>© <span id="year"></span> 대순진리회 소통의 광장</footer>
+<footer>© <span id="year"></span> 대순소식</footer>
 
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
@@ -124,7 +119,7 @@ const $ = (s)=>document.querySelector(s);
 $("#year").textContent = new Date().getFullYear();
 const fmt = (ts)=> ts?.toDate ? ts.toDate().toLocaleString("ko-KR",{dateStyle:"medium", timeStyle:"short"}) : "";
 
-// -------------------- 홈 조회수 (세션당 1회) --------------------
+/* 1) 홈 조회수 (세션당 1회 증가 → stats/home.views) */
 (async ()=>{
   try{
     const homeBadge = $("#homeViews");
@@ -140,7 +135,7 @@ const fmt = (ts)=> ts?.toDate ? ts.toDate().toLocaleString("ko-KR",{dateStyle:"m
   }catch(e){ console.warn("홈 조회수 오류:", e.message); }
 })();
 
-// -------------------- 공지 (제목 클릭 → 본문 토글 + 조회수) --------------------
+/* 2) 공지: 제목 클릭 시 펼치고, 펼칠 때 세션당 1회 views++ */
 const noticesRef = collection(db, "notices");
 const noticeUl = $("#noticeList");
 const noticeEmpty = $("#noticeEmpty");
@@ -158,14 +153,14 @@ onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap)=>{
 
     const title = document.createElement("div");
     title.className = "row";
-    title.innerHTML = \`
+    title.innerHTML = `
       <div class="no">공지</div>
-      <div class="tit">\${n.title}</div>
+      <div class="tit">${n.title}</div>
       <div class="meta">
-        <span>\${fmt(n.createdAt)}</span>
-        <span class="views" id="notice-views-\${id}">조회수 \${n.views || 0}</span>
+        <span>${fmt(n.createdAt)}</span>
+        <span class="views" id="notice-views-${id}">조회수 ${n.views || 0}</span>
       </div>
-    \`;
+    `;
 
     const body = document.createElement("div");
     body.className = "body";
@@ -175,7 +170,6 @@ onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap)=>{
       const wasOpen = body.style.display === "block";
       body.style.display = wasOpen ? "none" : "block";
       if (!wasOpen){
-        // 조회수 증가 (세션당 1회/공지)
         const seenKey = "noticeViewed:" + id;
         if (!sessionStorage.getItem(seenKey)){
           try{
@@ -198,7 +192,7 @@ onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap)=>{
   });
 }, (err)=>{ console.warn("공지 읽기 오류:", err.message); });
 
-// -------------------- 게시판 (페이지당 5개 + 조회수) --------------------
+/* 3) 게시판: 페이지당 5개 + 제목 클릭 시 펼치고 세션당 1회 views++ */
 const postsRef   = collection(db, "posts");
 const postUl     = $("#boardList");
 const boardEmpty = $("#boardEmpty");
@@ -221,14 +215,14 @@ function renderPage(page=1){
 
     const row = document.createElement("div");
     row.className = "row";
-    row.innerHTML = \`
-      <div class="no">\${allPosts.length - (start + idx)}</div>
-      <div class="tit">\${p.title || "(제목 없음)"}</div>
+    row.innerHTML = `
+      <div class="no">${allPosts.length - (start + idx)}</div>
+      <div class="tit">${p.title || "(제목 없음)"}</div>
       <div class="meta">
-        <span>\${p.author || "익명"} · \${fmt(p.createdAt)}</span>
-        <span class="views" id="post-views-\${p.id}">조회수 \${p.views || 0}</span>
+        <span>${p.author || "익명"} · ${fmt(p.createdAt)}</span>
+        <span class="views" id="post-views-${p.id}">조회수 ${p.views || 0}</span>
       </div>
-    \`;
+    `;
 
     const body = document.createElement("div");
     body.className = "body";
@@ -238,7 +232,6 @@ function renderPage(page=1){
       const wasOpen = body.style.display === "block";
       body.style.display = wasOpen ? "none" : "block";
       if (!wasOpen){
-        // 조회수 증가 (세션당 1회/게시글)
         const seenKey = "postViewed:" + p.id;
         if (!sessionStorage.getItem(seenKey)){
           try{
@@ -281,7 +274,7 @@ onSnapshot(query(postsRef, orderBy("createdAt","desc")), (snap)=>{
   renderPage(1);
 }, (err)=>{ console.warn("게시판 읽기 오류:", err.message); });
 
-// -------------------- 글쓰기 (로그인 없이) --------------------
+/* 4) 글쓰기 (로그인 없이 유지) */
 const postBtn    = document.getElementById("postBtn");
 const postTitle  = document.getElementById("postTitle");
 const postAuthor = document.getElementById("postAuthor");
@@ -299,27 +292,6 @@ postBtn.addEventListener("click", async ()=>{
     alert("등록 실패: " + e.message);
   }
 });
-
-// -------------------- (선택) 공지 자동 등록 시드 --------------------
-// URL 뒤에 ?seedNotice=1 또는 #seed-notice 를 붙여 접속하면
-// 같은 제목 공지가 없을 때만 1회 등록합니다.
-(async ()=>{
-  try{
-    const url = new URL(window.location.href);
-    const shouldSeed = url.searchParams.get("seedNotice")==="1" || window.location.hash==="#seed-notice";
-    if (!shouldSeed) return;
-
-    const requiredTitle = "종단소식 공유 사이트 개설 공지";
-    const requiredBody = "공지 본문을 여기에 붙여넣어 주세요.";
-
-    const noticesCol = collection(db, "notices");
-    const exists = await getDocs(query(noticesCol, where("title","==", requiredTitle)));
-    if (exists.empty){
-      await addDoc(noticesCol, { title: requiredTitle, body: requiredBody, views: 0, createdAt: serverTimestamp() });
-      alert("공지 1건을 등록했습니다.");
-    }
-  }catch(e){ console.warn("공지 시드 실패:", e); }
-})();
 </script>
 </body>
 </html>
