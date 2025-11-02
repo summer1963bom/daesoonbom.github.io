@@ -276,9 +276,7 @@ function oncePerHours(key, hours){
 // 증가: 같은 브라우저에서 6시간 내 재방문은 중복 카운트 방지
 (async () => {
   try {
-    if (oncePerHours("site_visit_at", 6)){
       await setDoc(countersRef, { visits: increment(1) }, { merge: true });
-    }
   } catch(e){ /* noop */ }
 })();
 
