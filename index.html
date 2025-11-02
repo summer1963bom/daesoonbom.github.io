@@ -7,64 +7,128 @@
   <meta name="description" content="로그인 없이 글 작성 가능한 공지/게시판 (Firebase Firestore)" />
   <style>
     :root{
-      --bg:#0b1020; --card:#121a32; --muted:#94a3b8; --text:#e5e7eb;
-      --accent:#4f46e5; --accent2:#22d3ee; --ring:rgba(34,211,238,.35);
-      --shadow:0 20px 45px rgba(0,0,0,.35); --r:20px;
+      --bg: #0b1020; --card: #121a32; --muted: #94a3b8; --text: #e5e7eb;
+      --accent: #4f46e5; --accent-2: #22d3ee; --ring: rgba(34,211,238,.35);
+      --shadow: 0 20px 45px rgba(0,0,0,.35); --radius: 20px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
     body{
-      margin:0; font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
-      Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Pretendard, Arial, sans-serif;
+      margin:0;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Pretendard, Arial, sans-serif;
       color:var(--text);
       background: radial-gradient(1200px 600px at 10% 0%, rgba(79,70,229,.25), transparent 60%),
                   radial-gradient(1000px 600px at 90% 0%, rgba(34,211,238,.2), transparent 60%),
                   var(--bg);
       line-height:1.6;
     }
-    header{position:sticky;top:0;z-index:10;backdrop-filter:blur(8px);background:rgba(11,16,32,.85);border-bottom:1px solid rgba(99,102,241,.2)}
-    .container{max-width:1100px;margin:0 auto;padding:24px}
-    .brand{display:flex;align-items:center;gap:14px}
-    .title{font-weight:800;letter-spacing:-.02em;font-size:22px}
-    .pill{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid rgba(34,211,238,.35);background:rgba(34,211,238,.12);color:#bbf7fe}
-    .grid{display:grid;gap:24px;margin-top:24px;grid-template-columns:1.1fr .9fr}
-    @media (max-width: 960px){ .grid{ grid-template-columns:1fr; } }
-    .card{background:rgba(18,26,50,.9);border:1px solid rgba(148,163,184,.15);border-radius:var(--r);box-shadow:var(--shadow)}
-    .inner{padding:22px}
-    h1,h2,h3{margin:0 0 12px}
-    .list{list-style:none;padding:0;margin:0;display:grid;gap:12px}
-    .item{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:12px 16px;background:rgba(255,255,255,.02)}
-    .row{display:flex;align-items:center;gap:10px}
-    .no{background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.3);color:#a5f3fc;border-radius:8px;padding:4px 8px;font-size:12px}
-    .tit{cursor:pointer;font-weight:700;color:#e0e7ff}
-    .tit:hover{text-decoration:underline}
-    .meta{margin-left:auto;font-size:12px;color:#94a3b8;display:flex;gap:10px;align-items:center}
-    .views{font-size:12px;color:#cbd5e1}
-    .body{display:none;margin-top:10px;color:#cbd5e1;white-space:pre-line}
-    .pagination{display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap}
-    .page{border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.03);padding:6px 10px;border-radius:10px;cursor:pointer}
-    .page[aria-current="page"]{border-color:#22d3ee;font-weight:800;box-shadow:0 0 0 3px rgba(34,211,238,.18)}
-    .form{display:grid;gap:10px;margin-top:14px}
-    .row2{display:grid;gap:10px;grid-template-columns:1fr 1fr}
-    @media (max-width:680px){.row2{grid-template-columns:1fr}}
-    input[type=text], textarea{
-      width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(148,163,184,.25);
-      background:rgba(255,255,255,.03);color:var(--text);outline:none;
+    a{ color: var(--accent-2); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter:saturate(1.3) blur(8px);
+      background: linear-gradient(to bottom, rgba(11,16,32,.9), rgba(11,16,32,.5));
+      border-bottom:1px solid rgba(99,102,241,.2);
     }
-    input[type=text]:focus, textarea:focus{border-color:#22d3ee;box-shadow:0 0 0 4px var(--ring)}
-    textarea{min-height:110px;resize:vertical}
-    .btn{border:1px solid rgba(148,163,184,.28);background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));padding:10px 14px;border-radius:12px;color:#e5e7eb;cursor:pointer}
-    footer{text-align:center;color:#94a3b8;font-size:14px;margin:40px 0}
-  </style>
+    .container{ max-width:1100px; margin:0 auto; padding:24px; }
+    .brand{ display:flex; align-items:center; gap:14px; }
+    .logo{
+      width:36px; height:36px; border-radius:50%;
+      background: radial-gradient(circle at 30% 20%, #22d3ee, #4f46e5);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.15), 0 4px 16px rgba(34,211,238,.35);
+    }
+    .title{ font-weight:800; letter-spacing:-.02em; font-size:22px; }
+    .container .muted{ color:var(--muted); }
+    .grid{ display:grid; gap:24px; margin-top:24px; grid-template-columns: 1.1fr .9fr; }
+    @media (max-width: 960px){ .grid{ grid-template-columns:1fr; } }
+    .card{
+      background: linear-gradient(180deg, rgba(18,26,50,.9), rgba(18,26,50,.8));
+      border:1px solid rgba(148,163,184,.12);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .card .inner{ padding:24px; }
+    .card h2{ margin:0 0 12px; font-size:22px; letter-spacing:-.01em; }
+    .list{ display:grid; gap:12px; padding:0; margin:0; list-style:none; }
+    .item{ border:1px solid rgba(148,163,184,.12); border-radius:14px; padding:14px 16px; background: linear-gradient(180deg, rgba(18,26,50,.65), rgba(18,26,50,.5)); }
+    .item h3{ margin:0 0 6px; font-size:18px; }
+    .meta{ display:flex; gap:10px; font-size:12px; color:var(--muted); }
+    .empty{ color:var(--muted); padding:12px; border:1px dashed rgba(148,163,184,.3); border-radius:12px; text-align:center; }
+    .form{ display:grid; gap:10px; margin-top:14px; }
+    .row{ display:grid; gap:10px; grid-template-columns:1fr 1fr; }
+    @media (max-width:640px){ .row{ grid-template-columns:1fr; } }
+    input[type="text"], textarea{
+      width:100%; padding:12px 14px; border-radius:12px;
+      border:1px solid rgba(148,163,184,.25); background:rgba(255,255,255,.03); color:var(--text);
+      outline:none; transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    input[type="text"]:focus, textarea:focus{ border-color:var(--accent-2); box-shadow:0 0 0 4px var(--ring); }
+    textarea{ min-height:110px; resize:vertical; }
+
+    /* 게시판 목록(제목만) */
+    .board-item { padding: 10px 14px; border:1px solid rgba(148,163,184,.18); border-radius:12px; }
+    .board-row { display:flex; gap:12px; align-items:center; }
+    .board-no   { width: 48px; min-width:48px; text-align:center; font-weight:700; color:#cdd5e1; border:1px solid rgba(148,163,184,.25); border-radius:10px; padding:6px 0; }
+    .board-title { cursor:pointer; font-weight:700; text-decoration:none; }
+    .board-title:hover { text-decoration:underline; }
+    .board-meta { margin-left:auto; font-size:12px; color:#94a3b8; }
+    .board-body { display:none; margin-top:10px; color:#cbd5e1; }
+
+    .pagination { display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+    .page-btn {
+      border:1px solid rgba(148,163,184,.25); background:rgba(255,255,255,.03);
+      padding:8px 12px; border-radius:10px; cursor:pointer;
+    }
+    .page-btn[aria-current="page"] { font-weight:800; border-color:#22d3ee; box-shadow:0 0 0 3px rgba(34,211,238,.25); }
+    .page-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+    .pill { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: rgba(34,211,238,.16); border: 1px solid rgba(34,211,238,.35); color: #c0f6ff; }
+    .search { display:flex; gap:10px; align-items:center; }
+
+    /* 모바일 보완 */
+    @media (max-width: 640px){
+      .container{ padding:14px; }
+      .card .inner{ padding:16px; }
+      .row{ grid-template-columns:1fr; }
+      .board-no{ width:36px; min-width:36px; font-size:12px; }
+      .board-title{ font-size:16px; }
+      .board-meta{ font-size:11px; }
+    }
+    footer{ margin:40px 0 60px; text-align:center; color:var(--muted); font-size:14px; }
+  /* ==== enhanced typography helpers ==== */
+.lead{ font-size:1.1rem; line-height:1.8; }
+.divider{ border:0; border-top:1px solid rgba(148,163,184,.25); margin:14px 0 18px; }
+.prose{ display:grid; gap:12px; }
+.hero-title{ font-size:28px; letter-spacing:-.02em; margin:0; }
+.callout{ border:1px solid rgba(250,204,21,.35); background:linear-gradient(180deg, rgba(250,204,21,.08), rgba(250,204,21,.03)); 
+          color:#fde68a; padding:14px; border-radius:14px; }
+.callout strong{ color:#fff; }
+.checklist{ counter-reset: step; list-style:none; padding:0; display:grid; gap:10px; }
+.checklist li{ position:relative; padding:10px 12px 10px 40px; border:1px solid rgba(148,163,184,.18); border-radius:12px;
+               background:rgba(255,255,255,.03); }
+.checklist li::before{ counter-increment: step; content: counter(step); position:absolute; left:10px; top:10px; 
+                       width:22px; height:22px; border-radius:8px; display:grid; place-items:center;
+                       border:1px solid rgba(148,163,184,.35); color:#cbd5e1; font-weight:700; font-size:12px; }
+blockquote{ margin:0; padding:10px 14px; border-left:4px solid var(--accent-2); background:rgba(34,211,238,.06); border-radius:8px; }
+.center{ text-align:center; }
+.small{ font-size:.95rem; color:var(--muted); }
+.kicker{ text-transform:uppercase; letter-spacing:.12em; font-size:.75rem; color:#a5b4fc; }
+.summary-grid{ display:grid; gap:10px; }
+@media (max-width:640px){
+  .hero-title{ font-size:24px; }
+  .lead{ font-size:1rem; }
+}
+</style>
 </head>
 <body>
-<header>
-  <div class="container brand">
-    <div class="title">대순소식 — 게시판</div>
-    <span id="homeViews" class="pill">조회수 0</span>
-  </div>
-</header>
-
+  <header>
+    <div class="container brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div class="title">대순소식</div>
+      <span class="muted" style="margin-left:auto;">로그인 없이 글 작성 가능</span>
+    </div>
+  </header>
 
   <main class="container">
     <section class="card">
@@ -120,26 +184,53 @@
       </div>
     </section>
 
+    <div class="grid">
+<!-- 공지 -->
+<section class="card" aria-labelledby="noticeTitle">
+  <div class="inner">
+    <h2 id="noticeTitle">공지</h2>
+    <ul id="noticeList" class="list" aria-live="polite"></ul>
+    <div id="noticeEmpty" class="empty" hidden>등록된 공지가 없습니다.</div>
+  </div>
+</section>
 
+      <!-- 게시판 -->
+      <section class="card" aria-labelledby="boardTitle">
+        <div class="inner">
+          <h2 id="boardTitle">게시판</h2>
 
+          <div class="search" style="margin-bottom:10px;">
+            <input id="searchInput" type="text" placeholder="검색: 제목/작성자/내용" aria-label="게시판 검색" />
+            <span class="pill" id="countPill">0개</span>
+          </div>
 
-  <aside class="card">
-    <div class="inner">
-      <h2>공지</h2>
-      <ul id="noticeList" class="list"></ul>
-      <div id="noticeEmpty" class="muted">등록된 공지가 없습니다.</div>
+          <!-- 제목만 보이는 목록 -->
+          <ul id="boardList" class="list" aria-live="polite"></ul>
+          <div id="boardEmpty" class="empty" hidden>등록된 게시글이 없습니다.</div>
+
+          <!-- 페이지네이션 -->
+          <nav id="pagination" class="pagination" aria-label="게시판 페이지 탐색"></nav>
+
+          <!-- 글쓰기 -->
+          <div class="form" style="margin-top:18px;">
+            <div class="row">
+              <input id="postTitle" type="text" placeholder="제목(올리고 싶은 글의 제목을 쓰세요)" aria-label="게시글 제목" />
+              <input id="postAuthor" type="text" placeholder="작성자(선택 사항)" aria-label="게시글 작성자" />
+            </div>
+            <textarea id="postBody" placeholder="여기에 올리고 싶은 글 내용을 작성하세요. 비방, 욕설, 명예훼손 등은 하지 말아 주세요." aria-label="게시글 내용"></textarea>
+            <button class="btn" id="postBtn">게시하기</button>
+          </div>
+        </div>
+      </section>
     </div>
-  </aside> 
-</main>
 
-<footer>© <span id="year"></span> 대순소식</footer>
+    <footer>© <span id="year"></span> 대순소식. All rights reserved.</footer>
+  </main>
 
-<script type="module">
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import {
-  getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot,
-  doc, getDoc, setDoc, updateDoc, increment, where, getDocs
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  <!-- ===== Firebase 초기화(앱 1회) & Firestore만 사용 ===== -->
+  <script type="module" id="firebase-init">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     // ⬇️ 본인 Firebase 설정으로 교체(프로젝트 설정 → 일반 → 내 앱(웹))
     const firebaseConfig = {
@@ -151,399 +242,206 @@ import {
       appId: "1:202579781081:web:69532923098bef8399e5c8"
     };
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db  = getFirestore(app);
 
-const $ = (s)=>document.querySelector(s);
-$("#year").textContent = new Date().getFullYear();
-const fmt = (ts)=> ts?.toDate ? ts.toDate().toLocaleString("ko-KR",{dateStyle:"medium", timeStyle:"short"}) : "";
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
 
-/* 1) 홈 조회수 (세션당 1회 증가 → stats/home.views) */
-(async ()=>{
-  try{
-    const homeBadge = $("#homeViews");
-    const key = "homeViewed";
-    const ref = doc(db, "stats", "home");
-    if (!sessionStorage.getItem(key)){
-      await setDoc(ref, { views: increment(1) }, { merge: true });
-      sessionStorage.setItem(key, "1");
-    }
-    const snap = await getDoc(ref);
-    const views = snap.exists() && snap.data().views ? snap.data().views : 1;
-    if (homeBadge) homeBadge.textContent = `조회수 ${views}`;
-  }catch(e){ console.warn("홈 조회수 오류:", e.message); }
-})();
+    // 전역 노출
+    window.__FIREBASE__ = { app, db };
+  </script>
 
-/* 2) 공지: 제목 클릭 시 펼치고, 펼칠 때 세션당 1회 views++ */
+  <!-- ===== 앱 로직 (공지/게시판/페이지네이션) — Auth 제거 버전 ===== -->
+  <script type="module">
+    import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot }
+      from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const { db } = window.__FIREBASE__;
+
+    const $ = (sel) => document.querySelector(sel);
+    $("#year").textContent = new Date().getFullYear();
+    const fmt = (ts) => { try { if (ts?.toDate) return ts.toDate().toLocaleString("ko-KR",{dateStyle:"medium", timeStyle:"short"});} catch(_){} return ""; };
+
+/* -------------------- 공지 -------------------- */
 const noticesRef = collection(db, "notices");
 const noticeUl = $("#noticeList");
 const noticeEmpty = $("#noticeEmpty");
 
-onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap)=>{
+onSnapshot(query(noticesRef, orderBy("createdAt","desc")), (snap) => {
   noticeUl.innerHTML = "";
-  if (snap.empty){ noticeEmpty.style.display="block"; return; }
-  noticeEmpty.style.display="none";
+  if (snap.empty) { noticeEmpty.hidden = false; return; }
+  noticeEmpty.hidden = true;
 
-  snap.forEach(d=>{
-    const n = d.data();
-    const id = d.id;
+  snap.forEach(doc => {
+    const n = doc.data();
     const li = document.createElement("li");
     li.className = "item";
 
+    // 제목행
     const title = document.createElement("div");
-    title.className = "row";
+    title.className = "board-row";
     title.innerHTML = `
-      <div class="no">공지</div>
-      <div class="tit">${n.title}</div>
-      <div class="meta">
-        <span>${fmt(n.createdAt)}</span>
-        <span class="views" id="notice-views-${id}">조회수 ${n.views || 0}</span>
-      </div>
+      <div class="board-no">공지</div>
+      <div class="board-title" style="cursor:pointer;font-weight:700;">${n.title}</div>
+      <div class="board-meta">${fmt(n.createdAt)}</div>
     `;
 
+    // 본문
     const body = document.createElement("div");
-    body.className = "body";
-    body.textContent = n.body || "";
+    body.className = "board-body";
+    body.innerHTML = (n.body || "").replaceAll("<","&lt;")
+                                   .replaceAll(">","&gt;")
+                                   .replaceAll("\n","<br>");
+    body.style.display = "none";
 
-    title.querySelector(".tit").addEventListener("click", async ()=>{
-      const wasOpen = body.style.display === "block";
-      body.style.display = wasOpen ? "none" : "block";
-      if (!wasOpen){
-        const seenKey = "noticeViewed:" + id;
-        if (!sessionStorage.getItem(seenKey)){
-          try{
-            await updateDoc(doc(db, "notices", id), { views: increment(1) });
-            sessionStorage.setItem(seenKey, "1");
-            const el = document.getElementById("notice-views-" + id);
-            if (el){
-              const cur = Number((n.views||0)) + 1;
-              el.textContent = "조회수 " + cur;
-              n.views = cur;
-            }
-          }catch(e){ console.warn("공지 조회수 증가 실패:", e.message); }
-        }
-      }
+    // 클릭시 토글
+    title.querySelector(".board-title").addEventListener("click", () => {
+      body.style.display = body.style.display === "block" ? "none" : "block";
     });
 
     li.appendChild(title);
     li.appendChild(body);
     noticeUl.appendChild(li);
   });
-}, (err)=>{ console.warn("공지 읽기 오류:", err.message); });
+});
 
-/* 3) 게시판: 페이지당 5개 + 제목 클릭 시 펼치고 세션당 1회 views++ */
-const postsRef   = collection(db, "posts");
-const postUl     = $("#boardList");
-const boardEmpty = $("#boardEmpty");
-const pagination = $("#pagination");
+    /* -------------------- 게시판 -------------------- */
+    const postsRef   = collection(db, "posts");
+    const postUl     = $("#boardList");
+    const postEmpty  = $("#boardEmpty");
+    const searchInput= $("#searchInput");
+    const countPill  = $("#countPill");
+    const pagination = $("#pagination");
 
-const PAGE_SIZE = 5;
-let allPosts = [];
-let currentPage = 1;
+    const postBtn    = $("#postBtn");
+    const postTitle  = $("#postTitle");
+    const postAuthor = $("#postAuthor");
+    const postBody   = $("#postBody");
 
-function renderPage(page=1){
-  postUl.innerHTML = "";
-  const start = (page-1)*PAGE_SIZE;
-  const pagePosts = allPosts.slice(start, start+PAGE_SIZE);
-  if (!pagePosts.length){ boardEmpty.style.display="block"; return; }
-  boardEmpty.style.display="none";
+    // (선택) 간단 스팸 방지: 금지어 + 쿨다운
+    const BLOCKLIST = [/viagra/i,/카지노/i,/https?:\/\/\S+/i]; // 필요시 확장
+    const POST_COOLDOWN_MS = 45 * 1000; // 45초
+    const tooSoon = () => Date.now() - (Number(localStorage.getItem("lastPostAt")||0)) < POST_COOLDOWN_MS;
+    const hasBlocked = (t,b) => BLOCKLIST.some(rx => rx.test((t||"")+ "\n" + (b||"")));
 
-  pagePosts.forEach((p, idx)=>{
-    const li = document.createElement("li");
-    li.className = "item";
+    let allPosts = [];
+    let filtered = [];
+    let currentPage = 1;
+    const PAGE_SIZE = 5;
 
-    const row = document.createElement("div");
-    row.className = "row";
-    row.innerHTML = `
-      <div class="no">${allPosts.length - (start + idx)}</div>
-      <div class="tit">${p.title || "(제목 없음)"}</div>
-      <div class="meta">
-        <span>${p.author || "익명"} · ${fmt(p.createdAt)}</span>
-        <span class="views" id="post-views-${p.id}">조회수 ${p.views || 0}</span>
-      </div>
-    `;
+    const renderCount = () => { countPill.textContent = (filtered.length||0) + "개"; postEmpty.hidden = filtered.length>0; };
 
-    const body = document.createElement("div");
-    body.className = "body";
-    body.textContent = p.body || "";
+    function renderPage(page=1){
+      currentPage = page;
+      postUl.innerHTML = "";
+      if (!filtered.length){ postEmpty.hidden = false; return; }
+      postEmpty.hidden = true;
 
-    row.querySelector(".tit").addEventListener("click", async ()=>{
-      const wasOpen = body.style.display === "block";
-      body.style.display = wasOpen ? "none" : "block";
-      if (!wasOpen){
-        const seenKey = "postViewed:" + p.id;
-        if (!sessionStorage.getItem(seenKey)){
-          try{
-            await updateDoc(doc(db, "posts", p.id), { views: increment(1) });
-            sessionStorage.setItem(seenKey, "1");
-            const el = document.getElementById("post-views-" + p.id);
-            if (el){
-              const cur = Number((p.views||0)) + 1;
-              el.textContent = "조회수 " + cur;
-              p.views = cur;
-            }
-          }catch(e){ console.warn("게시글 조회수 증가 실패:", e.message); }
-        }
+      const total = filtered.length;
+      const start = (page - 1) * PAGE_SIZE;
+      const end   = Math.min(start + PAGE_SIZE, total);
+      const pageSlice = filtered.slice(start, end);
+
+      pageSlice.forEach((p, idx) => {
+        const globalNo = total - (start + idx);
+
+        const li = document.createElement("li");
+        li.className = "board-item";
+
+        const row = document.createElement("div");
+        row.className = "board-row";
+
+        const no  = document.createElement("div");
+        no.className = "board-no";
+        no.textContent = globalNo;
+
+        const title = document.createElement("a");
+        title.href = "javascript:void(0)";
+        title.className = "board-title";
+        title.textContent = p.title || "(제목 없음)";
+
+        const meta = document.createElement("div");
+        meta.className = "board-meta";
+        meta.textContent = `${p.author || "익명"} · ${fmt(p.createdAt) || ""}`;
+
+        row.appendChild(no);
+        row.appendChild(title);
+        row.appendChild(meta);
+
+        const body = document.createElement("div");
+        body.className = "board-body";
+        body.innerHTML = (p.body || "").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\n","<br>");
+
+        title.addEventListener("click", () => {
+          postUl.querySelectorAll(".board-body").forEach(el => { if (el !== body) el.style.display = "none"; });
+          body.style.display = (body.style.display === "block") ? "none" : "block";
+        });
+
+        li.appendChild(row);
+        li.appendChild(body);
+        postUl.appendChild(li);
+      });
+    }
+
+    function renderPagination(){
+      pagination.innerHTML = "";
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      const addBtn = (label, disabled, onClick, isCurrent=false) => {
+        const b = document.createElement("button");
+        b.className = "page-btn"; b.textContent = label;
+        if (disabled) b.disabled = true;
+        if (isCurrent) b.setAttribute("aria-current","page");
+        b.addEventListener("click", onClick);
+        pagination.appendChild(b);
+      };
+      addBtn("« 이전", currentPage<=1, ()=>{ if(currentPage>1){ renderPage(currentPage-1); renderPagination(); }});
+      for (let p=1; p<=totalPages; p++){ addBtn(String(p), false, ()=>{ renderPage(p); renderPagination(); }, p===currentPage); }
+      addBtn("다음 »", currentPage>=totalPages, ()=>{ if(currentPage<totalPages){ renderPage(currentPage+1); renderPagination(); }});
+    }
+
+    function applyFilterAndRender(){
+      const q = (searchInput.value || "").trim().toLowerCase();
+      filtered = (q
+        ? allPosts.filter(p => [p.title, p.author, p.body].some(t => (t||"").toLowerCase().includes(q)))
+        : allPosts.slice()
+      ).filter(p => !hasBlocked(p.title, p.body)); // 금지어 렌더 차단
+      filtered.sort((a,b) => {
+        const ad = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const bd = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return bd - ad;
+      });
+      renderCount(); renderPage(1); renderPagination();
+    }
+
+    onSnapshot(query(postsRef, orderBy("createdAt","desc")), (snap) => {
+      allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      applyFilterAndRender();
+    }, (err) => alert("게시글 불러오기 오류: " + err.message));
+
+    searchInput.addEventListener("input", () => applyFilterAndRender());
+
+    postBtn.addEventListener("click", async () => {
+      const title = postTitle.value.trim();
+      const author= postAuthor.value.trim();
+      const body  = postBody.value.trim();
+      if (!title || !body) return alert("제목과 내용을 입력해주세요.");
+      if (hasBlocked(title, body)) return alert("금지된 문구(또는 링크)가 포함되어 게시할 수 없습니다.");
+      if (tooSoon()) {
+        const last = Number(localStorage.getItem("lastPostAt")||0);
+        const left = Math.ceil((POST_COOLDOWN_MS - (Date.now()-last))/1000);
+        return alert(`잠시 후 다시 시도해주세요. (${left}초)`);
+      }
+      try {
+        await addDoc(postsRef, {
+          title, author, body,
+          createdAt: serverTimestamp()
+        });
+        localStorage.setItem("lastPostAt", Date.now());
+        postTitle.value = ""; postAuthor.value = ""; postBody.value = "";
+      } catch (e) {
+        alert("등록 실패: " + e.message);
       }
     });
-
-    li.appendChild(row);
-    li.appendChild(body);
-    postUl.appendChild(li);
-  });
-
-  renderPagination(page);
-}
-
-function renderPagination(page){
-  pagination.innerHTML = "";
-  const totalPages = Math.max(1, Math.ceil(allPosts.length / PAGE_SIZE));
-  for (let i=1; i<=totalPages; i++){
-    const btn = document.createElement("button");
-    btn.className = "page";
-    btn.textContent = i;
-    if (i===page) btn.setAttribute("aria-current","page");
-    btn.addEventListener("click",()=>{ currentPage=i; renderPage(i); });
-    pagination.appendChild(btn);
-  }
-}
-
-onSnapshot(query(postsRef, orderBy("createdAt","desc")), (snap)=>{
-  allPosts = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-  renderPage(1);
-}, (err)=>{ console.warn("게시판 읽기 오류:", err.message); });
-
-/* 4) 글쓰기 (로그인 없이 유지) */
-const postBtn    = document.getElementById("postBtn");
-const postTitle  = document.getElementById("postTitle");
-const postAuthor = document.getElementById("postAuthor");
-const postBody   = document.getElementById("postBody");
-
-postBtn.addEventListener("click", async ()=>{
-  const title = (postTitle.value||"").trim();
-  const author= (postAuthor.value||"").trim();
-  const body  = (postBody.value||"").trim();
-  if (!title || !body){ alert("제목과 내용을 입력해 주세요."); return; }
-  try{
-    await addDoc(postsRef, { title, author, body, views: 0, createdAt: serverTimestamp() });
-    postTitle.value = ""; postAuthor.value=""; postBody.value="";
-  }catch(e){
-    alert("등록 실패: " + e.message);
-  }
-});
-</script>
-
-<!-- ===== Appended by Patch: Views + Notice/Board (non-invasive) ===== -->
-<style>
-  /* Non-invasive styles with unique prefixes */
-  .xbridge-wrap{max-width:1100px;margin:24px auto;padding:0 16px}
-  .xbridge-card{margin:18px 0;padding:16px;border:1px solid rgba(148,163,184,.25);border-radius:12px}
-  .xbridge-title{margin:0 0 10px;font-weight:800}
-  .xbridge-list{list-style:none;padding:0;margin:0;display:grid;gap:10px}
-  .xbridge-item{border:1px solid rgba(148,163,184,.2);border-radius:10px;padding:10px 12px}
-  .xbridge-row{display:flex;align-items:center;gap:10px}
-  .xbridge-no{background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.3);color:#0369a1;border-radius:8px;padding:2px 8px;font-size:12px}
-  .xbridge-tit{cursor:pointer;font-weight:700}
-  .xbridge-meta{margin-left:auto;font-size:12px;opacity:.8;display:flex;gap:10px;align-items:center}
-  .xbridge-body{display:none;margin-top:8px;white-space:pre-line}
-  .xbridge-pagination{display:flex;justify-content:center;gap:6px;margin-top:12px;flex-wrap:wrap}
-  .xbridge-page{border:1px solid rgba(148,163,184,.3);background:transparent;padding:6px 10px;border-radius:8px;cursor:pointer}
-  .xbridge-page[aria-current="page"]{font-weight:800}
-  .xbridge-postform{display:grid;gap:8px;margin-top:12px}
-  .xbridge-row2{display:grid;gap:8px;grid-template-columns:1fr 1fr}
-  @media (max-width:680px){.xbridge-row2{grid-template-columns:1fr}}
-  .xbridge-input, .xbridge-textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(148,163,184,.35)}
-  .xbridge-textarea{min-height:110px;resize:vertical}
-  .xbridge-btn{border:1px solid rgba(148,163,184,.35);background:transparent;padding:9px 12px;border-radius:10px;cursor:pointer}
-  /* Floating home views badge (doesn't change existing header) */
-  .xbridge-home-badge{position:fixed;right:12px;bottom:12px;z-index:9999;background:#111827;color:#e5e7eb;
-    border:1px solid rgba(148,163,184,.35);border-radius:999px;padding:6px 10px;font-size:12px;box-shadow:0 6px 24px rgba(0,0,0,.15)}
-</style>
-
-<!-- Floating home views badge -->
-<span id="xbridge-homeViews" class="xbridge-home-badge" title="홈 조회수">조회수 0</span>
-
-<!-- Appended sections so original page remains intact -->
-<div class="xbridge-wrap" id="xbridge-root">
-
-
-
-
-
-  <section class="xbridge-card">
-    <h2 class="xbridge-title">게시판</h2>
-    <ul id="xbridge-boardList" class="xbridge-list" aria-live="polite"></ul>
-    <div id="xbridge-boardEmpty" style="opacity:.75">등록된 게시글이 없습니다.</div>
-    <nav id="xbridge-pagination" class="xbridge-pagination" aria-label="게시판 페이지"></nav>
-
-    <div class="xbridge-postform">
-      <div class="xbridge-row2">
-        <input id="xbridge-postTitle" class="xbridge-input" type="text" placeholder="제목" aria-label="게시글 제목" />
-        <input id="xbridge-postAuthor" class="xbridge-input" type="text" placeholder="작성자 (선택 사항)" aria-label="게시글 작성자" />
-      </div>
-      <textarea id="xbridge-postBody" class="xbridge-textarea" placeholder="여기에 올리고 싶은 글 내용을 작성하세요. 비방, 욕설, 명예훼손 등은 하지 말아 주세요." aria-label="게시글 내용"></textarea>
-      <button class="xbridge-btn" id="xbridge-postBtn">게시하기</button>
-    </div>
-  </section>
-</div>
-
-<script type="module">
-/* ===== Non-invasive Firebase integration: reuse if already initialized ===== */
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import {
-  getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot,
-  doc, getDoc, setDoc, updateDoc, increment
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-/* Try to detect existing firebaseConfig on the page */
-let inferredConfig = null;
-try {
-  // If user defined firebaseConfig globally, reuse it
-  // eslint-disable-next-line no-undef
-  if (window.firebaseConfig && window.firebaseConfig.apiKey) inferredConfig = window.firebaseConfig;
-} catch(_) {}
-
-const firebaseConfig = inferredConfig || {
-  /* TODO: 아래 값을 본인 Firebase 프로젝트 값으로 교체하세요 */
-    const firebaseConfig = {
-      apiKey: "AIzaSyBiJ0DkGbirfs242W5nsVEgNroIxjCEHj0",
-      authDomain: "daesoonbom-84743.firebaseapp.com",
-      projectId: "daesoonbom-84743",
-      storageBucket: "daesoonbom-84743.appspot.com",
-      messagingSenderId: "202579781081",
-      appId: "1:202579781081:web:69532923098bef8399e5c8"
-    };
-
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-
-/* Utils */
-const $ = (s)=>document.querySelector(s);
-const fmt = (ts)=> ts?.toDate ? ts.toDate().toLocaleString("ko-KR",{dateStyle:"medium", timeStyle:"short"}) : "";
-
-/* ===== 1) 홈 조회수: 페이지 열 때마다 증가 ===== */
-(async ()=>{
-  try{
-    const ref = doc(db, "stats", "home");
-    await setDoc(ref, { views: increment(1) }, { merge: true }); // 항상 +1
-    const snap = await getDoc(ref);
-    const v = snap.exists() && snap.data().views ? snap.data().views : 1;
-    const badge = $("#xbridge-homeViews");
-    if (badge) badge.textContent = `조회수 ${v}`;
-  }catch(e){ console.warn("홈 조회수 오류:", e.message); }
-})();
-
-/* ===== 2) 공지: 제목 클릭마다 조회수 증가 + 본문 토글 ===== */
-const noticeUl = $("#xbridge-noticeList");
-const noticeEmpty = $("#xbridge-noticeEmpty");
-onSnapshot(query(collection(db, "notices"), orderBy("createdAt","desc")), (snap)=>{
-  if (!noticeUl) return;
-  noticeUl.innerHTML = "";
-  if (snap.empty){ if (noticeEmpty) noticeEmpty.style.display="block"; return; }
-  if (noticeEmpty) noticeEmpty.style.display="none";
-  snap.forEach(d=>{
-    const n = d.data(); const id = d.id;
-    const li = document.createElement("li"); li.className = "xbridge-item";
-    const title = document.createElement("div"); title.className = "xbridge-row";
-    const viewsNow = Number(n.views || 0);
-    title.innerHTML = `
-      <div class="xbridge-no">공지</div>
-      <div class="xbridge-tit">${n.title||"(제목 없음)"}</div>
-      <div class="xbridge-meta">
-        <span>${fmt(n.createdAt)}</span>
-        <span class="xbridge-views" id="xbridge-notice-views-${id}" data-v="${viewsNow}">조회수 ${viewsNow}</span>
-      </div>`;
-    const body = document.createElement("div"); body.className = "xbridge-body";
-    body.textContent = n.body || "";
-    title.querySelector(".xbridge-tit").addEventListener("click", async ()=>{
-      body.style.display = body.style.display === "block" ? "none" : "block";
-      try{
-        await updateDoc(doc(db, "notices", id), { views: increment(1) });
-        const el = document.getElementById("xbridge-notice-views-" + id);
-        if (el){ const cur = Number(el.dataset.v||0)+1; el.dataset.v=String(cur); el.textContent="조회수 "+cur; }
-      }catch(e){ console.warn("공지 조회수 증가 실패:", e.message); }
-    });
-    li.appendChild(title); li.appendChild(body); noticeUl.appendChild(li);
-  });
-});
-
-/* ===== 3) 게시판: 페이지당 5개 + 제목 클릭마다 조회수 증가 ===== */
-const postUl = $("#xbridge-boardList");
-const boardEmpty = $("#xbridge-boardEmpty");
-const pagination = $("#xbridge-pagination");
-const postsRef = collection(db, "posts");
-
-const PAGE_SIZE = 5;
-let allPosts = [];
-let currentPage = 1;
-
-function renderPage(page=1){
-  if (!postUl) return;
-  postUl.innerHTML = "";
-  const start = (page-1)*PAGE_SIZE;
-  const pagePosts = allPosts.slice(start, start+PAGE_SIZE);
-  if (!pagePosts.length){ if (boardEmpty) boardEmpty.style.display="block"; return; }
-  if (boardEmpty) boardEmpty.style.display="none";
-
-  pagePosts.forEach((p, idx)=>{
-    const li = document.createElement("li"); li.className = "xbridge-item";
-    const row = document.createElement("div"); row.className = "xbridge-row";
-    const viewsNow = Number(p.views || 0);
-    row.innerHTML = `
-      <div class="xbridge-no">${allPosts.length - (start + idx)}</div>
-      <div class="xbridge-tit">${p.title || "(제목 없음)"}</div>
-      <div class="xbridge-meta">
-        <span>${(p.author||"익명")} · ${fmt(p.createdAt)}</span>
-        <span class="xbridge-views" id="xbridge-post-views-${p.id}" data-v="${viewsNow}">조회수 ${viewsNow}</span>
-      </div>`;
-    const body = document.createElement("div"); body.className = "xbridge-body";
-    body.textContent = p.body || "";
-    row.querySelector(".xbridge-tit").addEventListener("click", async ()=>{
-      body.style.display = body.style.display === "block" ? "none" : "block";
-      try{
-        await updateDoc(doc(db, "posts", p.id), { views: increment(1) });
-        const el = document.getElementById("xbridge-post-views-" + p.id);
-        if (el){ const cur = Number(el.dataset.v||0)+1; el.dataset.v=String(cur); el.textContent="조회수 "+cur; }
-      }catch(e){ console.warn("게시글 조회수 증가 실패:", e.message); }
-    });
-    li.appendChild(row); li.appendChild(body); postUl.appendChild(li);
-  });
-
-  if (!pagination) return;
-  pagination.innerHTML = "";
-  const totalPages = Math.max(1, Math.ceil(allPosts.length / PAGE_SIZE));
-  for (let i=1; i<=totalPages; i++){
-    const btn = document.createElement("button"); btn.className="xbridge-page"; btn.textContent=i;
-    if (i===page) btn.setAttribute("aria-current","page");
-    btn.addEventListener("click", ()=>{ currentPage=i; renderPage(i); });
-    pagination.appendChild(btn);
-  }
-}
-
-onSnapshot(query(postsRef, orderBy("createdAt","desc")), (snap)=>{
-  allPosts = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-  renderPage(1);
-});
-
-/* 글쓰기(로그인 없이) */
-const postBtn    = $("#xbridge-postBtn");
-const postTitle  = $("#xbridge-postTitle");
-const postAuthor = $("#xbridge-postAuthor");
-const postBody   = $("#xbridge-postBody");
-if (postBtn){
-  postBtn.addEventListener("click", async ()=>{
-    const title = (postTitle?.value||"").trim();
-    const author= (postAuthor?.value||"").trim();
-    const body  = (postBody?.value||"").trim();
-    if (!title || !body){ alert("제목과 내용을 입력해 주세요."); return; }
-    try{
-      await addDoc(postsRef, { title, author, body, views: 0, createdAt: serverTimestamp() });
-      if (postTitle) postTitle.value=""; if (postAuthor) postAuthor.value=""; if (postBody) postBody.value="";
-    }catch(e){ alert("등록 실패: " + e.message); }
-  });
-}
-</script>
-<!-- ===== End of Patch ===== -->
-
+  </script>
 </body>
 </html>
