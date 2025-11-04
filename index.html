@@ -127,7 +127,7 @@ blockquote{ margin:0; padding:10px 14px; border-left:4px solid var(--accent-2); 
       <div class="logo" aria-hidden="true"></div>
       <div class="title">대순소식</div>
       <span class="muted" style="margin-left:auto;"> </span>
-      <span id="visitBadge" class="pill" title="방문자 수" style="margin-left:10px;">방문자 0</span>
+      <span id="visitBadge" class="pill" title="방문자 수" style="margin-left:10px;">  </span>
     </div>
   </header>
 
@@ -283,7 +283,7 @@ function oncePerHours(key, hours){
 // 표시: 실시간 반영
 onSnapshot(countersRef, (snap) => {
   const v = (snap.data() && (snap.data().visits || 0)) || 0;
-  if (visitBadge) visitBadge.textContent = "방문자 " + v.toLocaleString("ko-KR");
+  //if (visitBadge) visitBadge.textContent = "방문자 " + v.toLocaleString("ko-KR");
 });
 
 
